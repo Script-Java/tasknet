@@ -1,0 +1,3 @@
+## 2024-05-18 - Added Accessibility Labels to Natural Input
+**Learning:** Icon-only buttons (like the Mic and Send buttons in NaturalInput) and inputs without associated labels were missing crucial accessibility and UX contexts. Using `aria-label` makes them accessible to screen readers, and `title` provides a helpful tooltip for sighted users, especially for stateful actions like the voice recording button.
+**Action:** Always check icon-only buttons for `aria-label` and `title`. Ensure inputs have either a connected `<label>` or an `aria-label` attribute if a visual label is omitted for design reasons.
