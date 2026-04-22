@@ -96,12 +96,15 @@ export function NaturalInput({ userId, onSaved }: { userId: string, onSaved: () 
           value={input}
           onChange={e => setInput(e.target.value)}
           placeholder="Try 'Gym every day at 6pm' or 'Finish project by Friday'"
+          aria-label="Task or habit description"
           className="flex-1 bg-transparent border-none focus:ring-0 text-lg font-medium text-neutral-900 dark:text-neutral-100 placeholder-neutral-400/70 py-3"
         />
         <div className="flex items-center space-x-1 pr-2">
             <button
                 type="button"
                 onClick={toggleListening}
+                aria-label={isListening ? "Stop listening" : "Start voice input"}
+                title={isListening ? "Stop listening" : "Start voice input"}
                 className={`p-3 rounded-xl transition-all ${isListening ? 'bg-red-100 text-red-500 dark:bg-red-900/30' : 'text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:text-blue-500'}`}
             >
                 {isListening ? <Loader2 className="w-6 h-6 animate-spin" /> : <Mic className="w-6 h-6" />}
@@ -109,6 +112,8 @@ export function NaturalInput({ userId, onSaved }: { userId: string, onSaved: () 
             <button
                 type="submit"
                 disabled={!input.trim()}
+                aria-label="Submit"
+                title="Submit"
                 className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 transition-all shadow-md shadow-blue-500/20"
             >
                 <Send className="w-6 h-6" />
