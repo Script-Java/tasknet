@@ -19,8 +19,12 @@ export async function syncWithSupabase() {
     // 1. Push local changes
     const pendingChanges = await getAll('pendingChanges');
     if (pendingChanges.length > 0) {
-      await pushChanges(pendingChanges);
-      await clearPendingChanges();
+      const success = await pushChanges(pendingChanges);
+      if (success) {
+        await clearPendingChanges();
+      } else {
+        throw new Error('Failed to push some changes, aborting clear');
+      }
     }
 
     // 2. Pull remote changes
@@ -31,29 +35,37 @@ export async function syncWithSupabase() {
     await setLastSyncedAt(new Date().toISOString());
   } catch (error) {
     console.error('Sync failed:', error);
+    throw error;
   }
 }
 
 async function pushChanges(changes: PendingChange[]) {
+  let allSuccess = true;
   for (const change of changes) {
     const { table, action, record_id, data } = change;
 
     if (action === 'INSERT' || action === 'UPDATE') {
       const { error } = await supabase
         .from(table)
-        .upsert(data)
-        .eq('id', record_id);
+        .upsert(data);
 
-      if (error) console.error(`Error pushing ${action} to ${table}:`, error);
+      if (error) {
+        console.error(`Error pushing ${action} to ${table}:`, error);
+        allSuccess = false;
+      }
     } else if (action === 'DELETE') {
       const { error } = await supabase
         .from(table)
         .delete()
         .eq('id', record_id);
 
-      if (error) console.error(`Error pushing DELETE to ${table}:`, error);
+      if (error) {
+        console.error(`Error pushing DELETE to ${table}:`, error);
+        allSuccess = false;
+      }
     }
   }
+  return allSuccess;
 }
 
 async function pullChanges(_lastSyncedAt: string | null) {

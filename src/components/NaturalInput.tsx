@@ -1,42 +1,120 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { parseNaturalLanguageInput } from '../lib/nlp';
 import { upsertRecord } from '../lib/store';
-import { Mic, Send } from 'lucide-react';
+import { Mic, Send, Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
+
+// Setup SpeechRecognition types
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
 
 export function NaturalInput({ userId, onSaved }: { userId: string, onSaved: () => void }) {
   const [input, setInput] = useState('');
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'en-US';
 
-    const parsed = parseNaturalLanguageInput(input, userId);
-    if (parsed) {
-      if (parsed.type === 'task') {
-        await upsertRecord('tasks', parsed.data);
-      } else {
-        await upsertRecord('habits', parsed.data);
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInput(transcript);
+        // Automatically submit after a short delay for a magical feel
+        setTimeout(() => submitInput(transcript), 500);
+      };
+
+      recognitionRef.current.onerror = (event: any) => {
+        setIsListening(false);
+        toast.error('Speech recognition error: ' + event.error);
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+    }
+  }, []);
+
+  const toggleListening = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+    } else {
+      if (!recognitionRef.current) {
+        toast.error('Speech recognition is not supported in this browser.');
+        return;
       }
-      setInput('');
-      onSaved();
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+        toast('Listening...', { icon: '🎙️', id: 'listening' });
+      } catch (e) {
+        // Handle case where it's already started
+        console.error(e);
+      }
     }
   };
 
+  const submitInput = async (textToSubmit: string = input) => {
+    if (!textToSubmit.trim()) return;
+
+    const parsed = parseNaturalLanguageInput(textToSubmit, userId);
+    if (parsed) {
+      if (parsed.type === 'task') {
+        await upsertRecord('tasks', parsed.data);
+        toast.success(`Task created: ${parsed.data.title}`);
+      } else {
+        await upsertRecord('habits', parsed.data);
+        toast.success(`Habit created: ${parsed.data.title}`);
+      }
+      setInput('');
+      onSaved();
+    } else {
+      toast.error('Could not understand input.');
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    submitInput();
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="bg-white dark:bg-neutral-800 p-4 rounded-2xl shadow-sm border border-neutral-100 dark:border-neutral-700 flex items-center space-x-2">
-      <input
-        type="text"
-        value={input}
-        onChange={e => setInput(e.target.value)}
-        placeholder="Try 'Gym every day at 6pm' or 'Finish project by Friday'"
-        className="flex-1 bg-transparent border-none focus:ring-0 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400"
-      />
-      <button type="button" className="p-2 text-neutral-400 hover:text-blue-500 transition">
-        <Mic className="w-5 h-5" />
-      </button>
-      <button type="submit" className="p-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition">
-        <Send className="w-5 h-5" />
-      </button>
+    <form onSubmit={handleSubmit} className="relative group">
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-500"></div>
+      <div className={`relative bg-white/90 dark:bg-neutral-800/90 backdrop-blur-xl p-2 pl-6 rounded-2xl shadow-xl border ${isListening ? 'border-blue-400 dark:border-blue-500' : 'border-white/50 dark:border-white/5'} flex items-center space-x-2 transition-all`}>
+        <input
+          type="text"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          placeholder="Try 'Gym every day at 6pm' or 'Finish project by Friday'"
+          className="flex-1 bg-transparent border-none focus:ring-0 text-lg font-medium text-neutral-900 dark:text-neutral-100 placeholder-neutral-400/70 py-3"
+        />
+        <div className="flex items-center space-x-1 pr-2">
+            <button
+                type="button"
+                onClick={toggleListening}
+                className={`p-3 rounded-xl transition-all ${isListening ? 'bg-red-100 text-red-500 dark:bg-red-900/30' : 'text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:text-blue-500'}`}
+            >
+                {isListening ? <Loader2 className="w-6 h-6 animate-spin" /> : <Mic className="w-6 h-6" />}
+            </button>
+            <button
+                type="submit"
+                disabled={!input.trim()}
+                className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 transition-all shadow-md shadow-blue-500/20"
+            >
+                <Send className="w-6 h-6" />
+            </button>
+        </div>
+      </div>
     </form>
   );
 }
