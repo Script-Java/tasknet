@@ -22,7 +22,12 @@ export function Auth() {
         if (error) throw error;
         toast.success('Account created successfully!');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Authentication error:', error.message);
+      } else {
+        console.error('Authentication error:', error);
+      }
       toast.error('Authentication failed. Please check your credentials and try again.');
     } finally {
       setLoading(false);
