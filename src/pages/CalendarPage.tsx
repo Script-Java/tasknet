@@ -37,6 +37,16 @@ export function CalendarPage({ userId }: { userId: string }) {
   // Generate hours for the day view (8 AM to 8 PM)
   const hours = Array.from({ length: 13 }, (_, i) => i + 8);
 
+  // Pre-group entries by hour for performance
+  const entriesByHour = selectedDayEntries.reduce((acc, entry) => {
+    const entryHour = new Date(entry.start_time).getHours();
+    if (!acc[entryHour]) {
+      acc[entryHour] = [];
+    }
+    acc[entryHour].push(entry);
+    return acc;
+  }, {} as Record<number, typeof selectedDayEntries>);
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 h-full flex flex-col">
       <div>
@@ -73,7 +83,7 @@ export function CalendarPage({ userId }: { userId: string }) {
 
                  {hours.map(hour => {
                      // Check if any entries fall in this hour block strictly for visual grouping (simplified)
-                     const hourEntries = selectedDayEntries.filter(e => new Date(e.start_time).getHours() === hour);
+                     const hourEntries = entriesByHour[hour] || [];
 
                      return (
                          <div key={hour} className="relative flex min-h-[5rem] group">
