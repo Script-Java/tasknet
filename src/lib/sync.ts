@@ -4,7 +4,7 @@ import {
   clearPendingChanges,
   getLastSyncedAt,
   setLastSyncedAt,
-  syncOverwriteRecord
+  syncOverwriteRecords
 } from './store';
 import type { PendingChange } from './types';
 
@@ -83,11 +83,9 @@ async function pullChanges(_lastSyncedAt: string | null, userId: string) {
       continue;
     }
 
-    if (data) {
-      // Overwrite local records with remote records
-      for (const record of data) {
-        await syncOverwriteRecord(table, record);
-      }
+    if (data && data.length > 0) {
+      // Overwrite local records with remote records in bulk
+      await syncOverwriteRecords(table, data);
     }
   }
 }

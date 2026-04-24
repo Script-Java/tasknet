@@ -17,7 +17,7 @@ vi.mock('./store', () => ({
   clearPendingChanges: vi.fn(),
   getLastSyncedAt: vi.fn(),
   setLastSyncedAt: vi.fn(),
-  syncOverwriteRecord: vi.fn(),
+  syncOverwriteRecords: vi.fn(),
 }));
 
 describe('syncWithSupabase', () => {
@@ -91,7 +91,8 @@ describe('syncWithSupabase', () => {
     const upsertMock = vi.fn().mockResolvedValue({ error: null });
 
     // For pullChanges
-    const selectMock = vi.fn().mockResolvedValue({ data: [{ id: '1' }], error: null });
+    const queryEqMock = vi.fn().mockResolvedValue({ data: [{ id: '1' }], error: null });
+    const selectMock = vi.fn().mockReturnValue({ eq: queryEqMock });
 
     vi.mocked(supabase.from).mockReturnValue({
       upsert: upsertMock,
@@ -104,7 +105,7 @@ describe('syncWithSupabase', () => {
     await syncWithSupabase();
 
     expect(store.clearPendingChanges).toHaveBeenCalled();
-    expect(store.syncOverwriteRecord).toHaveBeenCalled();
+    expect(store.syncOverwriteRecords).toHaveBeenCalled();
     expect(store.setLastSyncedAt).toHaveBeenCalled();
   });
 });
