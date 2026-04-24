@@ -7,9 +7,10 @@ import { Dashboard } from './pages/Dashboard'
 import { CalendarPage } from './pages/CalendarPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { supabase } from './lib/supabase'
+import type { Session } from '@supabase/supabase-js'
 
 function App() {
-  const [session, setSession] = useState<any>(null)
+  const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
