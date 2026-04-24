@@ -1,6 +1,6 @@
 import { openDB } from 'idb';
 import type { DBSchema, IDBPDatabase } from 'idb';
-import type { Task, Habit, CalendarEntry, PendingChange } from './types';
+import type { Task, Habit, CalendarEntry, PendingChange, TableName } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
 interface TaskNetDB extends DBSchema {
@@ -77,7 +77,7 @@ export async function getById<T extends 'tasks' | 'habits' | 'calendar_entries' 
 // }
 
 // Write/Update with pending change
-export async function upsertRecord(table: 'tasks' | 'habits' | 'calendar_entries', record: any) {
+export async function upsertRecord<T extends TableName>(table: T, record: TaskNetDB[T]['value']) {
   const db = await initDB();
   const tx = db.transaction([table, 'pendingChanges'], 'readwrite');
 
@@ -135,12 +135,12 @@ export async function clearPendingChanges() {
 }
 
 // Sync overwrite directly from remote without adding to pendingChanges
-export async function syncOverwriteRecord(table: 'tasks' | 'habits' | 'calendar_entries', record: any) {
+export async function syncOverwriteRecord<T extends TableName>(table: T, record: TaskNetDB[T]['value']) {
     const db = await initDB();
     await db.put(table, record);
 }
 
-export async function syncDeleteRecord(table: 'tasks' | 'habits' | 'calendar_entries', id: string) {
+export async function syncDeleteRecord(table: TableName, id: string) {
     const db = await initDB();
     await db.delete(table, id);
 }
