@@ -41,3 +41,27 @@ export interface PendingChange {
   data?: any;
   timestamp: string;
 }
+
+export interface UserProgress {
+  xp: number;
+  level: number;
+  next_level_xp: number;
+}
+
+export interface DailyScore {
+  percentage: number;
+  grade: 'A' | 'B' | 'C' | 'D';
+}
+
+export interface Achievement {
+  id: string;
+  user_id: string;
+  type: string;
+  unlocked_at: string;
+}
+
+export interface GamificationUser {
+  id: string;
+  xp: number;
+  coins: number;
+}
