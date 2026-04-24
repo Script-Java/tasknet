@@ -23,7 +23,7 @@ export function Auth() {
         toast.success('Account created successfully!');
       }
     } catch (error: any) {
-      toast.error(error.error_description || error.message || 'Authentication failed');
+      toast.error('Authentication failed. Please check your credentials and try again.');
     } finally {
       setLoading(false);
     }
@@ -38,9 +38,8 @@ export function Auth() {
       <div className="w-full max-w-md p-10 space-y-8 bg-white/70 dark:bg-neutral-800/70 backdrop-blur-2xl rounded-[2rem] shadow-2xl border border-white/20 dark:border-white/5">
         <div className="text-center space-y-2">
           <div className="flex justify-center mb-6">
-            <img src="/logo.png" alt="TaskNet Logo" className="w-16 h-16 object-contain drop-shadow-md" />
+            <img src="/logo.png" alt="TaskNet Logo" className="w-24 h-24 md:w-32 md:h-32 object-contain drop-shadow-lg" />
           </div>
-          <h1 className="text-4xl font-black tracking-tight bg-gradient-to-br from-blue-600 to-indigo-600 bg-clip-text text-transparent">TaskNet</h1>
           <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
             {isLogin ? 'Sign in to orchestrate your day.' : 'Create an account to get started.'}
           </p>

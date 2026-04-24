@@ -26,12 +26,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Sidebar */}
       <aside className="w-20 md:w-64 bg-white/80 dark:bg-neutral-800/80 backdrop-blur-xl border-r border-neutral-200/50 dark:border-neutral-700/50 flex-col justify-between hidden sm:flex shadow-sm z-10">
         <div className="p-4 md:p-6">
-          <div className="flex items-center space-x-3 mb-10 hidden md:flex cursor-default">
-             <img src="/logo.png" alt="TaskNet Logo" className="w-10 h-10 object-contain drop-shadow-sm" />
-             <span className="text-2xl font-black tracking-widest bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">TASKNET</span>
-          </div>
-          <div className="flex justify-center md:hidden mb-10">
-            <img src="/logo.png" alt="TaskNet Logo" className="w-10 h-10 object-contain drop-shadow-sm" />
+          <div className="flex justify-center mb-10 cursor-default">
+             <img src="/logo.png" alt="TaskNet Logo" className="w-16 h-16 md:w-20 md:h-20 object-contain drop-shadow-md" />
           </div>
 
           <nav className="space-y-2">
