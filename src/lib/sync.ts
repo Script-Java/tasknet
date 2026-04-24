@@ -74,7 +74,7 @@ async function pullChanges(_lastSyncedAt: string | null, userId: string) {
   for (const table of tables) {
     const query = supabase.from(table).select('*').eq('user_id', userId);
 
-    // In a real app we would have a 'updated_at' or soft delete to only pull diffs.
+    // TODO: Implement 'updated_at' diff logic instead of pulling all
     // Here we pull all data for the user to ensure sync. Supabase RLS handles user scoping.
     const { data, error } = await query;
 
