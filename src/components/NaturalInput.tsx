@@ -22,23 +22,42 @@ export function NaturalInput({ userId, onSaved }: { userId: string, onSaved: () 
     if (SpeechRecognition) {
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
+      recognitionRef.current.interimResults = true;
       recognitionRef.current.lang = 'en-US';
 
       recognitionRef.current.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setInput(transcript);
-        // Automatically submit after a short delay for a magical feel
-        setTimeout(() => submitInput(transcript), 500);
+        let finalTranscript = '';
+        let interimTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+
+        setInput(() => {
+          // If we have final transcript, append it to what we had before starting recognition,
+          // but since continuous is false, the whole result usually comes in one or a few events.
+          // For a simpler approach, just replace the input with the combined transcript.
+          // To avoid overwriting existing text the user might have typed, let's just
+          // replace everything with the new speech if they started speaking while it was empty,
+          // or append if we want. For now, matching standard behavior: just show what they are saying.
+          return finalTranscript || interimTranscript;
+        });
       };
 
       recognitionRef.current.onerror = (event: any) => {
         setIsListening(false);
+        toast.dismiss('listening');
         toast.error('Speech recognition error: ' + event.error);
       };
 
       recognitionRef.current.onend = () => {
         setIsListening(false);
+        toast.dismiss('listening');
       };
     }
   }, []);
