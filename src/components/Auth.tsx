@@ -23,7 +23,7 @@ export function Auth() {
         toast.success('Account created successfully!');
       }
     } catch (error: any) {
-      toast.error(error.error_description || error.message || 'Authentication failed');
+      toast.error('Authentication failed. Please check your credentials and try again.');
     } finally {
       setLoading(false);
     }
