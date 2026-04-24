@@ -72,7 +72,7 @@ async function pullChanges(_lastSyncedAt: string | null) {
   const tables: Array<'tasks' | 'habits' | 'calendar_entries'> = ['tasks', 'habits', 'calendar_entries'];
 
   for (const table of tables) {
-    let query = supabase.from(table).select('*');
+    const query = supabase.from(table).select('*');
 
     // In a real app we would have a 'updated_at' or soft delete to only pull diffs.
     // Here we pull all data for the user to ensure sync. Supabase RLS handles user scoping.

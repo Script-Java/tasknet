@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Task, Priority } from '../lib/types';
 import { upsertRecord } from '../lib/store';
+import toast from 'react-hot-toast';
 
 export function TaskForm({ userId, onSaved }: { userId: string, onSaved: () => void }) {
   const [title, setTitle] = useState('');
@@ -13,11 +14,17 @@ export function TaskForm({ userId, onSaved }: { userId: string, onSaved: () => v
     e.preventDefault();
     if (!title) return;
 
+    const parsedDuration = parseInt(duration, 10);
+    if (isNaN(parsedDuration) || parsedDuration <= 0) {
+      toast.error('Duration must be a positive integer');
+      return;
+    }
+
     const task: Task = {
       id: uuidv4(),
       user_id: userId,
       title,
-      duration: parseInt(duration),
+      duration: parsedDuration,
       priority,
       deadline: deadline ? new Date(deadline).toISOString() : null,
       created_at: new Date().toISOString(),

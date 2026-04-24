@@ -41,6 +41,7 @@ export function NaturalInput({ userId, onSaved }: { userId: string, onSaved: () 
         setIsListening(false);
       };
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggleListening = () => {
@@ -62,6 +63,7 @@ export function NaturalInput({ userId, onSaved }: { userId: string, onSaved: () 
       }
     }
   };
+
 
   const submitInput = async (textToSubmit: string = input) => {
     if (!textToSubmit.trim()) return;

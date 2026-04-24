@@ -23,7 +23,21 @@ export function Dashboard({ userId }: { userId: string }) {
   };
 
   useEffect(() => {
-    loadData();
+    let mounted = true;
+    const fetchInitialData = async () => {
+      await initDB();
+      const localTasks = await getAll('tasks') as Task[];
+      const localHabits = await getAll('habits') as Habit[];
+
+      if (mounted) {
+        setTasks(localTasks.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+        setHabits(localHabits);
+      }
+    };
+    fetchInitialData();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const handleSync = async () => {
@@ -32,7 +46,7 @@ export function Dashboard({ userId }: { userId: string }) {
       await syncWithSupabase();
       await loadData();
       toast.success('Synced with cloud');
-    } catch (e) {
+    } catch {
       toast.error('Sync failed');
     } finally {
       setIsSyncing(false);
