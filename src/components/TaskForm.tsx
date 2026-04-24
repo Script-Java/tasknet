@@ -37,8 +37,9 @@ export function TaskForm({ userId, onSaved }: { userId: string, onSaved: () => v
       <h3 className="text-lg font-semibold">New Task</h3>
 
       <div>
-        <label className="block text-sm text-neutral-600 dark:text-neutral-400">Title</label>
+        <label htmlFor="title" className="block text-sm text-neutral-600 dark:text-neutral-400">Title</label>
         <input
+          id="title"
           type="text"
           value={title}
           onChange={e => setTitle(e.target.value)}
@@ -50,8 +51,9 @@ export function TaskForm({ userId, onSaved }: { userId: string, onSaved: () => v
 
       <div className="flex space-x-4">
         <div className="flex-1">
-          <label className="block text-sm text-neutral-600 dark:text-neutral-400">Duration (min)</label>
+          <label htmlFor="duration" className="block text-sm text-neutral-600 dark:text-neutral-400">Duration (min)</label>
           <input
+            id="duration"
             type="number"
             value={duration}
             onChange={e => setDuration(e.target.value)}
@@ -60,8 +62,9 @@ export function TaskForm({ userId, onSaved }: { userId: string, onSaved: () => v
           />
         </div>
         <div className="flex-1">
-          <label className="block text-sm text-neutral-600 dark:text-neutral-400">Priority</label>
+          <label htmlFor="priority" className="block text-sm text-neutral-600 dark:text-neutral-400">Priority</label>
           <select
+            id="priority"
             value={priority}
             onChange={e => setPriority(e.target.value as Priority)}
             className="mt-1 w-full p-2 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700"
@@ -74,8 +77,9 @@ export function TaskForm({ userId, onSaved }: { userId: string, onSaved: () => v
       </div>
 
       <div>
-        <label className="block text-sm text-neutral-600 dark:text-neutral-400">Deadline (optional)</label>
+        <label htmlFor="deadline" className="block text-sm text-neutral-600 dark:text-neutral-400">Deadline (optional)</label>
         <input
+          id="deadline"
           type="datetime-local"
           value={deadline}
           onChange={e => setDeadline(e.target.value)}
