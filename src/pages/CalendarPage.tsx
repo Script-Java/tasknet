@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { getAll, initDB } from '../lib/store';
 import { scheduleTasksAndHabits } from '../lib/scheduler';
 import type { Task, Habit, CalendarEntry } from '../lib/types';
@@ -27,15 +27,31 @@ export function CalendarPage({ userId }: { userId: string }) {
   }, [userId]);
 
   // Generate week view
-  const startDate = startOfWeek(selectedDate, { weekStartsOn: 1 }); // Start on Monday
-  const weekDays = [...Array(7)].map((_, i) => addDays(startDate, i));
+  const startDate = useMemo(() => startOfWeek(selectedDate, { weekStartsOn: 1 }), [selectedDate]); // Start on Monday
+  const weekDays = useMemo(() => [...Array(7)].map((_, i) => addDays(startDate, i)), [startDate]);
 
   // Filter entries for selected day
-  const selectedDayEntries = entries.filter(e => isSameDay(parseISO(e.start_time), selectedDate))
-                                     .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+  const selectedDayEntries = useMemo(() => {
+    return entries
+      .filter(e => isSameDay(parseISO(e.start_time), selectedDate))
+      .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+  }, [entries, selectedDate]);
+
+  // Group entries by hour to prevent O(N*13) filtering during render
+  const entriesByHour = useMemo(() => {
+    const map = new Map<number, CalendarEntry[]>();
+    selectedDayEntries.forEach(e => {
+      const hour = new Date(e.start_time).getHours();
+      if (!map.has(hour)) {
+        map.set(hour, []);
+      }
+      map.get(hour)!.push(e);
+    });
+    return map;
+  }, [selectedDayEntries]);
 
   // Generate hours for the day view (8 AM to 8 PM)
-  const hours = Array.from({ length: 13 }, (_, i) => i + 8);
+  const hours = useMemo(() => Array.from({ length: 13 }, (_, i) => i + 8), []);
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 h-full flex flex-col">
@@ -73,7 +89,7 @@ export function CalendarPage({ userId }: { userId: string }) {
 
                  {hours.map(hour => {
                      // Check if any entries fall in this hour block strictly for visual grouping (simplified)
-                     const hourEntries = selectedDayEntries.filter(e => new Date(e.start_time).getHours() === hour);
+                     const hourEntries = entriesByHour.get(hour) || [];
 
                      return (
                          <div key={hour} className="relative flex min-h-[5rem] group">
