@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { getAll, initDB } from '../lib/store';
 import { scheduleTasksAndHabits } from '../lib/scheduler';
 import type { Task, Habit, CalendarEntry } from '../lib/types';
@@ -36,6 +36,9 @@ export function CalendarPage({ userId }: { userId: string }) {
 
   // Generate hours for the day view (8 AM to 8 PM)
   const hours = Array.from({ length: 13 }, (_, i) => i + 8);
+
+  const tasksMap = useMemo(() => new Map(tasks.map(t => [t.id, t])), [tasks]);
+  const habitsMap = useMemo(() => new Map(habits.map(h => [h.id, h])), [habits]);
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 h-full flex flex-col">
@@ -90,8 +93,8 @@ export function CalendarPage({ userId }: { userId: string }) {
                              {/* Render Entries */}
                              <div className="flex-1 pl-6 pb-2 pt-1">
                                  {hourEntries.map(entry => {
-                                     const task = entry.task_id ? tasks.find(t => t.id === entry.task_id) : null;
-                                     const habit = entry.habit_id ? habits.find(h => h.id === entry.habit_id) : null;
+                                     const task = entry.task_id ? tasksMap.get(entry.task_id) : null;
+                                     const habit = entry.habit_id ? habitsMap.get(entry.habit_id) : null;
                                      const item = task || habit;
                                      if (!item) return null;
 
