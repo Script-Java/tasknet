@@ -6,7 +6,8 @@ export function scheduleTasksAndHabits(
   tasks: Task[],
   habits: Habit[],
   userId: string,
-  startDay: Date = new Date()
+  startDay: Date = new Date(),
+  lookaheadDays: number = 7
 ): CalendarEntry[] {
   const entries: CalendarEntry[] = [];
   const parsedEntries: { start: number; end: number }[] = [];
@@ -61,8 +62,8 @@ export function scheduleTasksAndHabits(
     return slot;
   };
 
-  // Schedule habits first (simulate daily habits for the next 7 days for now)
-  for (let i = 0; i < 7; i++) {
+  // Schedule habits first for the specified lookahead period
+  for (let i = 0; i < lookaheadDays; i++) {
     const day = new Date(startDay);
     day.setDate(day.getDate() + i);
 
