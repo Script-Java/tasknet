@@ -140,6 +140,14 @@ export async function syncOverwriteRecord(table: 'tasks' | 'habits' | 'calendar_
     await db.put(table, record);
 }
 
+export async function syncOverwriteRecords(table: 'tasks' | 'habits' | 'calendar_entries', records: any[]) {
+    const db = await initDB();
+    const tx = db.transaction(table, 'readwrite');
+    const store = tx.objectStore(table);
+    await Promise.all(records.map(record => store.put(record)));
+    await tx.done;
+}
+
 export async function syncDeleteRecord(table: 'tasks' | 'habits' | 'calendar_entries', id: string) {
     const db = await initDB();
     await db.delete(table, id);
