@@ -91,7 +91,8 @@ describe('syncWithSupabase', () => {
     const upsertMock = vi.fn().mockResolvedValue({ error: null });
 
     // For pullChanges
-    const selectMock = vi.fn().mockResolvedValue({ data: [{ id: '1' }], error: null });
+    const selectEqMock = vi.fn().mockResolvedValue({ data: [{ id: '1' }], error: null });
+    const selectMock = vi.fn().mockReturnValue({ eq: selectEqMock });
 
     vi.mocked(supabase.from).mockReturnValue({
       upsert: upsertMock,
