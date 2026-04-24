@@ -62,20 +62,6 @@ export async function getById<T extends 'tasks' | 'habits' | 'calendar_entries' 
   return db.get(storeName, id);
 }
 
-// Add pending change helper
-// // async function addPendingChange(table: 'tasks' | 'habits' | 'calendar_entries', action: 'INSERT' | 'UPDATE' | 'DELETE', record_id: string, data?: any) {
-//   const db = await initDB();
-//   const change: PendingChange = {
-//     id: uuidv4(),
-//     table,
-//     action,
-//     record_id,
-//     data,
-//     timestamp: new Date().toISOString()
-//   };
-//   await db.put('pendingChanges', change);
-// }
-
 // Write/Update with pending change
 export async function upsertRecord(table: 'tasks' | 'habits' | 'calendar_entries', record: any) {
   const db = await initDB();
