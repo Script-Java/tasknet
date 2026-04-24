@@ -135,9 +135,13 @@ export async function clearPendingChanges() {
 }
 
 // Sync overwrite directly from remote without adding to pendingChanges
-export async function syncOverwriteRecord(table: 'tasks' | 'habits' | 'calendar_entries', record: any) {
+export async function syncOverwriteRecords(table: 'tasks' | 'habits' | 'calendar_entries', records: any[]) {
     const db = await initDB();
-    await db.put(table, record);
+    const tx = db.transaction(table, 'readwrite');
+    const store = tx.objectStore(table);
+
+    // Performance Optimization: Use Promise.all() for bulk IDB puts within a single transaction
+    await Promise.all([...records.map(record => store.put(record)), tx.done]);
 }
 
 export async function syncDeleteRecord(table: 'tasks' | 'habits' | 'calendar_entries', id: string) {
