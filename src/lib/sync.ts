@@ -29,7 +29,7 @@ export async function syncWithSupabase() {
 
     // 2. Pull remote changes
     const lastSyncedAt = await getLastSyncedAt();
-    await pullChanges(lastSyncedAt);
+    await pullChanges(lastSyncedAt, sessionData.session.user.id);
 
     // Update sync time
     await setLastSyncedAt(new Date().toISOString());
@@ -68,11 +68,11 @@ async function pushChanges(changes: PendingChange[]) {
   return allSuccess;
 }
 
-async function pullChanges(_lastSyncedAt: string | null) {
+async function pullChanges(_lastSyncedAt: string | null, userId: string) {
   const tables: Array<'tasks' | 'habits' | 'calendar_entries'> = ['tasks', 'habits', 'calendar_entries'];
 
   for (const table of tables) {
-    let query = supabase.from(table).select('*');
+    const query = supabase.from(table).select('*').eq('user_id', userId);
 
     // In a real app we would have a 'updated_at' or soft delete to only pull diffs.
     // Here we pull all data for the user to ensure sync. Supabase RLS handles user scoping.
