@@ -41,30 +41,67 @@ export async function syncWithSupabase() {
 
 async function pushChanges(changes: PendingChange[]) {
   let allSuccess = true;
-  for (const change of changes) {
-    const { table, action, record_id, data } = change;
 
-    if (action === 'INSERT' || action === 'UPDATE') {
+  // Group changes by table
+  const groupedChanges: Record<string, PendingChange[]> = {};
+  for (const change of changes) {
+    if (!groupedChanges[change.table]) {
+      groupedChanges[change.table] = [];
+    }
+    groupedChanges[change.table].push(change);
+  }
+
+  for (const [table, tableChanges] of Object.entries(groupedChanges)) {
+    // Resolve the final state for each record_id in this table
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const resolvedRecords: Record<string, { action: 'UPSERT' | 'DELETE', data?: any }> = {};
+
+    for (const change of tableChanges) {
+      if (change.action === 'INSERT' || change.action === 'UPDATE') {
+        resolvedRecords[change.record_id] = { action: 'UPSERT', data: change.data };
+      } else if (change.action === 'DELETE') {
+        resolvedRecords[change.record_id] = { action: 'DELETE' };
+      }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const upserts: any[] = [];
+    const deletes: string[] = [];
+
+    for (const [record_id, resolution] of Object.entries(resolvedRecords)) {
+      if (resolution.action === 'UPSERT') {
+        upserts.push(resolution.data);
+      } else if (resolution.action === 'DELETE') {
+        deletes.push(record_id);
+      }
+    }
+
+    // Execute bulk upserts
+    if (upserts.length > 0) {
       const { error } = await supabase
         .from(table)
-        .upsert(data);
+        .upsert(upserts);
 
       if (error) {
-        console.error(`Error pushing ${action} to ${table}:`, error);
+        console.error(`Error bulk pushing UPSERT to ${table}:`, error);
         allSuccess = false;
       }
-    } else if (action === 'DELETE') {
+    }
+
+    // Execute bulk deletes
+    if (deletes.length > 0) {
       const { error } = await supabase
         .from(table)
         .delete()
-        .eq('id', record_id);
+        .in('id', deletes);
 
       if (error) {
-        console.error(`Error pushing DELETE to ${table}:`, error);
+        console.error(`Error bulk pushing DELETE to ${table}:`, error);
         allSuccess = false;
       }
     }
   }
+
   return allSuccess;
 }
 
