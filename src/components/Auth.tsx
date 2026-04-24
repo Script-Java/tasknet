@@ -22,8 +22,21 @@ export function Auth() {
         if (error) throw error;
         toast.success('Account created successfully!');
       }
-    } catch (error: any) {
-      toast.error('Authentication failed. Please check your credentials and try again.');
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else if (typeof error === 'object' && error !== null) {
+        const err = error as Record<string, unknown>;
+        toast.error(
+          typeof err.error_description === 'string'
+            ? err.error_description
+            : typeof err.message === 'string'
+            ? err.message
+            : 'Authentication failed. Please check your credentials and try again.'
+        );
+      } else {
+        toast.error('Authentication failed. Please check your credentials and try again.');
+      }
     } finally {
       setLoading(false);
     }
