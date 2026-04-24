@@ -1,8 +1,17 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { syncWithSupabase } from './sync';
-import * as store from './store';
 import { supabase } from './supabase';
+import * as store from './store';
 import type { PendingChange } from './types';
+
+vi.mock('./supabase', () => ({
+  supabase: {
+    auth: {
+      getSession: vi.fn(),
+    },
+    from: vi.fn(),
+  },
+}));
 
 vi.mock('./store', () => ({
   getAll: vi.fn(),
@@ -12,30 +21,23 @@ vi.mock('./store', () => ({
   syncOverwriteRecord: vi.fn(),
 }));
 
-vi.mock('./supabase', () => {
-  return {
-    supabase: {
-      auth: {
-        getSession: vi.fn(),
-      },
-      from: vi.fn(),
-    },
-  };
-});
-
 describe('syncWithSupabase', () => {
   let mockUpsert: any;
-  let mockEq: any;
+  let mockDeleteEq: any;
   let mockDelete: any;
+  let mockSelectEq: any;
   let mockSelect: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'log').mockImplementation(() => {});
 
     mockUpsert = vi.fn().mockResolvedValue({ error: null });
-    mockEq = vi.fn().mockResolvedValue({ error: null });
-    mockDelete = vi.fn().mockReturnValue({ eq: mockEq });
-    mockSelect = vi.fn().mockResolvedValue({ data: [], error: null });
+    mockDeleteEq = vi.fn().mockResolvedValue({ error: null });
+    mockDelete = vi.fn().mockReturnValue({ eq: mockDeleteEq });
+    mockSelectEq = vi.fn().mockResolvedValue({ data: [], error: null });
+    mockSelect = vi.fn().mockReturnValue({ eq: mockSelectEq });
 
     (supabase.from as any).mockReturnValue({
       upsert: mockUpsert,
@@ -44,17 +46,22 @@ describe('syncWithSupabase', () => {
     });
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('should skip sync and return early if there is no logged-in user', async () => {
-    (supabase.auth.getSession as any).mockResolvedValue({ data: { session: null } });
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: null } } as any);
 
     await syncWithSupabase();
 
     expect(store.getAll).not.toHaveBeenCalled();
     expect(store.getLastSyncedAt).not.toHaveBeenCalled();
+    expect(console.log).toHaveBeenCalledWith('User not logged in, skipping sync');
   });
 
   it('should push pending changes, pull remote changes, and set last synced at', async () => {
-    (supabase.auth.getSession as any).mockResolvedValue({ data: { session: { user: { id: 'u1' } } } });
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'u1' } } } } as any);
 
     const pendingChanges: PendingChange[] = [
       { id: '1', table: 'tasks', action: 'INSERT', record_id: 't1', data: { id: 't1', title: 'Task 1' }, timestamp: '2023-01-01' },
@@ -65,9 +72,9 @@ describe('syncWithSupabase', () => {
     (store.getLastSyncedAt as any).mockResolvedValue('2023-01-01T00:00:00.000Z');
 
     const fakeTasksData = [{ id: 't1', title: 'Remote Task' }];
-    mockSelect.mockResolvedValueOnce({ data: fakeTasksData, error: null }); // For tasks
-    mockSelect.mockResolvedValueOnce({ data: [], error: null }); // For habits
-    mockSelect.mockResolvedValueOnce({ data: [], error: null }); // For calendar_entries
+    mockSelectEq.mockResolvedValueOnce({ data: fakeTasksData, error: null }); // For tasks
+    mockSelectEq.mockResolvedValueOnce({ data: [], error: null }); // For habits
+    mockSelectEq.mockResolvedValueOnce({ data: [], error: null }); // For calendar_entries
 
     await syncWithSupabase();
 
@@ -79,19 +86,20 @@ describe('syncWithSupabase', () => {
     expect(mockUpsert).toHaveBeenCalledWith({ id: 't1', title: 'Task 1' });
     expect(mockUpsert).toHaveBeenCalledWith({ id: 'h1', title: 'Habit 1' });
     expect(mockDelete).toHaveBeenCalled();
-    expect(mockEq).toHaveBeenCalledWith('id', 'c1');
+    expect(mockDeleteEq).toHaveBeenCalledWith('id', 'c1');
 
     expect(store.clearPendingChanges).toHaveBeenCalled();
 
     // Verify pulls
     expect(store.getLastSyncedAt).toHaveBeenCalled();
+    expect(mockSelectEq).toHaveBeenCalledWith('user_id', 'u1');
     expect(store.syncOverwriteRecord).toHaveBeenCalledWith('tasks', fakeTasksData[0]);
 
     expect(store.setLastSyncedAt).toHaveBeenCalled();
   });
 
   it('should handle push failures appropriately without clearing pending changes', async () => {
-    (supabase.auth.getSession as any).mockResolvedValue({ data: { session: { user: { id: 'u1' } } } });
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'u1' } } } } as any);
 
     const pendingChanges: PendingChange[] = [
       { id: '1', table: 'tasks', action: 'INSERT', record_id: 't1', data: { id: 't1' }, timestamp: '2023-01-01' },
@@ -107,14 +115,14 @@ describe('syncWithSupabase', () => {
   });
 
   it('should handle pull errors correctly and continue to next table', async () => {
-    (supabase.auth.getSession as any).mockResolvedValue({ data: { session: { user: { id: 'u1' } } } });
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'u1' } } } } as any);
     (store.getAll as any).mockResolvedValue([]); // No pending changes
     (store.getLastSyncedAt as any).mockResolvedValue('2023-01-01T00:00:00.000Z');
 
-    mockSelect.mockResolvedValueOnce({ data: null, error: new Error('Select Failed') }); // For tasks
+    mockSelectEq.mockResolvedValueOnce({ data: null, error: new Error('Select Failed') }); // For tasks
     const fakeHabitsData = [{ id: 'h1', title: 'Remote Habit' }];
-    mockSelect.mockResolvedValueOnce({ data: fakeHabitsData, error: null }); // For habits
-    mockSelect.mockResolvedValueOnce({ data: [], error: null }); // For calendar_entries
+    mockSelectEq.mockResolvedValueOnce({ data: fakeHabitsData, error: null }); // For habits
+    mockSelectEq.mockResolvedValueOnce({ data: [], error: null }); // For calendar_entries
 
     await syncWithSupabase();
 
@@ -124,7 +132,7 @@ describe('syncWithSupabase', () => {
   });
 
   it('should propagate generic errors from push changes or other async parts', async () => {
-    (supabase.auth.getSession as any).mockRejectedValue(new Error('Session Error'));
+    vi.mocked(supabase.auth.getSession).mockRejectedValue(new Error('Session Error'));
 
     await expect(syncWithSupabase()).rejects.toThrow('Session Error');
   });
