@@ -71,22 +71,24 @@ export function scheduleTasksAndHabits(
         let slot = new Date(day);
         slot.setHours(workStartHour, 0, 0, 0);
 
+        let slotMs = slot.getTime();
+        const durationMs = habit.duration * 60000;
+
         // Find non-overlapping slot (simplistic)
         let conflict = true;
         while (conflict) {
-            const slotEnd = addMinutes(slot, habit.duration);
-            const slotMs = slot.getTime();
-            const slotEndMs = slotEnd.getTime();
+            const slotEndMs = slotMs + durationMs;
 
             conflict = parsedEntries.some(e => {
                 return (slotMs < e.end && slotEndMs > e.start);
             });
             if (conflict) {
-                slot = addMinutes(slot, 30);
+                slotMs += 30 * 60000;
             }
         }
 
-        const end_time = addMinutes(slot, habit.duration);
+        slot = new Date(slotMs);
+        const end_time = new Date(slotMs + durationMs);
         entries.push({
             id: uuidv4(),
             user_id: userId,
@@ -107,22 +109,22 @@ export function scheduleTasksAndHabits(
 
   for (const task of pendingTasks) {
     let conflict = true;
+    const durationMs = task.duration * 60000;
     while (conflict) {
         currentSlot = findNextSlot(task.duration, currentSlot);
-        const slotEnd = addMinutes(currentSlot, task.duration);
         const currentSlotMs = currentSlot.getTime();
-        const slotEndMs = slotEnd.getTime();
+        const slotEndMs = currentSlotMs + durationMs;
 
         conflict = parsedEntries.some(e => {
             return (currentSlotMs < e.end && slotEndMs > e.start);
         });
 
         if (conflict) {
-            currentSlot = addMinutes(currentSlot, 30); // Try 30 mins later
+            currentSlot = new Date(currentSlotMs + 30 * 60000); // Try 30 mins later
         }
     }
 
-    const end_time = addMinutes(currentSlot, task.duration);
+    const end_time = new Date(currentSlot.getTime() + durationMs);
     entries.push({
         id: uuidv4(),
         user_id: userId,
