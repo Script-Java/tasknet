@@ -76,6 +76,20 @@ describe('syncWithSupabase', () => {
     expect(console.error).toHaveBeenCalledWith('Sync failed:', expect.any(Error));
   });
 
+  it('handles and re-throws errors during pullChanges phase', async () => {
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: { session: { user: { id: 'test-user' } } }
+    } as any);
+
+    vi.mocked(store.getAll).mockResolvedValue([] as any);
+
+    const testError = new Error('Database read failed');
+    vi.mocked(store.getLastSyncedAt).mockRejectedValue(testError);
+
+    await expect(syncWithSupabase()).rejects.toThrow('Database read failed');
+    expect(console.error).toHaveBeenCalledWith('Sync failed:', testError);
+  });
+
   it('successfully pushes and pulls changes', async () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
       data: { session: { user: { id: 'test-user' } } }
@@ -91,7 +105,8 @@ describe('syncWithSupabase', () => {
     const upsertMock = vi.fn().mockResolvedValue({ error: null });
 
     // For pullChanges
-    const selectMock = vi.fn().mockResolvedValue({ data: [{ id: '1' }], error: null });
+    const eqMockSelect = vi.fn().mockResolvedValue({ data: [{ id: '1' }], error: null });
+    const selectMock = vi.fn().mockReturnValue({ eq: eqMockSelect });
 
     vi.mocked(supabase.from).mockReturnValue({
       upsert: upsertMock,
