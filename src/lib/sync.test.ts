@@ -68,7 +68,7 @@ describe('syncWithSupabase', () => {
     const upsertMock = vi.fn().mockResolvedValue({ error: new Error('Upsert failed') });
     vi.mocked(supabase.from).mockReturnValue({
       upsert: upsertMock,
-      delete: vi.fn().mockReturnValue({ eq: vi.fn() }),
+      delete: vi.fn().mockReturnValue({ eq: vi.fn(), in: vi.fn() }),
       select: vi.fn()
     } as any);
 
@@ -87,11 +87,14 @@ describe('syncWithSupabase', () => {
     ] as any);
 
     const eqMock = vi.fn().mockResolvedValue({ error: null });
-    const deleteMock = vi.fn().mockReturnValue({ eq: eqMock });
+    const inMock = vi.fn().mockResolvedValue({ error: null });
+    const deleteMock = vi.fn().mockReturnValue({ eq: eqMock, in: inMock });
     const upsertMock = vi.fn().mockResolvedValue({ error: null });
 
     // For pullChanges
-    const selectMock = vi.fn().mockResolvedValue({ data: [{ id: '1' }], error: null });
+    const selectMock = vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ data: [{ id: '1' }], error: null })
+    });
 
     vi.mocked(supabase.from).mockReturnValue({
       upsert: upsertMock,
