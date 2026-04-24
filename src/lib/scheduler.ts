@@ -37,7 +37,7 @@ export function scheduleTasksAndHabits(
 
   // Helper to find next available slot
   const findNextSlot = (durationMin: number, startFrom: Date) => {
-    let slot = new Date(startFrom);
+    const slot = new Date(startFrom);
     if (slot.getHours() >= workEndHour) {
       // Move to next day
       slot.setDate(slot.getDate() + 1);
@@ -62,7 +62,7 @@ export function scheduleTasksAndHabits(
 
   // Schedule habits first (simulate daily habits for the next 7 days for now)
   for (let i = 0; i < 7; i++) {
-    let day = new Date(startDay);
+    const day = new Date(startDay);
     day.setDate(day.getDate() + i);
 
     for (const habit of habits) {

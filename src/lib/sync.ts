@@ -40,39 +40,49 @@ export async function syncWithSupabase() {
 }
 
 async function pushChanges(changes: PendingChange[]) {
-  let allSuccess = true;
-  for (const change of changes) {
+  const promises = changes.map(async (change) => {
     const { table, action, record_id, data } = change;
+    let success = true;
 
-    if (action === 'INSERT' || action === 'UPDATE') {
-      const { error } = await supabase
-        .from(table)
-        .upsert(data);
+    try {
+      if (action === 'INSERT' || action === 'UPDATE') {
+        const { error } = await supabase
+          .from(table)
+          .upsert(data);
 
-      if (error) {
-        console.error(`Error pushing ${action} to ${table}:`, error);
-        allSuccess = false;
+        if (error) {
+          console.error(`Error pushing ${action} to ${table}:`, error);
+          success = false;
+        }
+      } else if (action === 'DELETE') {
+        const { error } = await supabase
+          .from(table)
+          .delete()
+          .eq('id', record_id);
+
+        if (error) {
+          console.error(`Error pushing DELETE to ${table}:`, error);
+          success = false;
+        }
       }
-    } else if (action === 'DELETE') {
-      const { error } = await supabase
-        .from(table)
-        .delete()
-        .eq('id', record_id);
-
-      if (error) {
-        console.error(`Error pushing DELETE to ${table}:`, error);
-        allSuccess = false;
-      }
+    } catch (e) {
+      console.error(`Unexpected error pushing ${action} to ${table}:`, e);
+      success = false;
     }
-  }
-  return allSuccess;
+
+    return success;
+  });
+
+  const results = await Promise.all(promises);
+  return results.every((res) => res === true);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function pullChanges(_lastSyncedAt: string | null) {
   const tables: Array<'tasks' | 'habits' | 'calendar_entries'> = ['tasks', 'habits', 'calendar_entries'];
 
   for (const table of tables) {
-    let query = supabase.from(table).select('*');
+    const query = supabase.from(table).select('*');
 
     // In a real app we would have a 'updated_at' or soft delete to only pull diffs.
     // Here we pull all data for the user to ensure sync. Supabase RLS handles user scoping.
