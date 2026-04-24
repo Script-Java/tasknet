@@ -4,35 +4,46 @@ import { upsertRecord } from '../lib/store';
 import { Mic, Send, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-// Setup SpeechRecognition types
-declare global {
-  interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
-  }
-}
-
 export function NaturalInput({ userId, onSaved }: { userId: string, onSaved: () => void }) {
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+  async function submitInput(textToSubmit: string = input) {
+    if (!textToSubmit.trim()) return;
+
+    const parsed = parseNaturalLanguageInput(textToSubmit, userId);
+    if (parsed) {
+      if (parsed.type === 'task') {
+        await upsertRecord('tasks', parsed.data);
+        toast.success(`Task created: ${parsed.data.title}`);
+      } else {
+        await upsertRecord('habits', parsed.data);
+        toast.success(`Habit created: ${parsed.data.title}`);
+      }
+      setInput('');
+      onSaved();
+    } else {
+      toast.error('Could not understand input.');
+    }
+  }
 
   useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      recognitionRef.current = new SpeechRecognition();
+    const SpeechRecognitionConstructor = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognitionConstructor) {
+      recognitionRef.current = new SpeechRecognitionConstructor();
       recognitionRef.current.continuous = false;
       recognitionRef.current.interimResults = false;
       recognitionRef.current.lang = 'en-US';
 
-      recognitionRef.current.onresult = (event: any) => {
+      recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
         const transcript = event.results[0][0].transcript;
         setInput(transcript);
         // Automatically submit after a short delay for a magical feel
         setTimeout(() => submitInput(transcript), 500);
       };
 
-      recognitionRef.current.onerror = (event: any) => {
+      recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
         setIsListening(false);
         toast.error('Speech recognition error: ' + event.error);
       };
@@ -41,6 +52,7 @@ export function NaturalInput({ userId, onSaved }: { userId: string, onSaved: () 
         setIsListening(false);
       };
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggleListening = () => {
@@ -60,25 +72,6 @@ export function NaturalInput({ userId, onSaved }: { userId: string, onSaved: () 
         // Handle case where it's already started
         console.error(e);
       }
-    }
-  };
-
-  const submitInput = async (textToSubmit: string = input) => {
-    if (!textToSubmit.trim()) return;
-
-    const parsed = parseNaturalLanguageInput(textToSubmit, userId);
-    if (parsed) {
-      if (parsed.type === 'task') {
-        await upsertRecord('tasks', parsed.data);
-        toast.success(`Task created: ${parsed.data.title}`);
-      } else {
-        await upsertRecord('habits', parsed.data);
-        toast.success(`Habit created: ${parsed.data.title}`);
-      }
-      setInput('');
-      onSaved();
-    } else {
-      toast.error('Could not understand input.');
     }
   };
 
