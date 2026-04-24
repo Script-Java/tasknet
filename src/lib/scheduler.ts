@@ -9,6 +9,7 @@ export function scheduleTasksAndHabits(
   startDay: Date = new Date()
 ): CalendarEntry[] {
   const entries: CalendarEntry[] = [];
+  const parsedEntries: { start: number; end: number }[] = [];
 
   // Basic settings: work from 9 AM to 5 PM
   const workStartHour = 9;
@@ -74,10 +75,11 @@ export function scheduleTasksAndHabits(
         let conflict = true;
         while (conflict) {
             const slotEnd = addMinutes(slot, habit.duration);
-            conflict = entries.some(e => {
-                const eStart = new Date(e.start_time);
-                const eEnd = new Date(e.end_time);
-                return (slot < eEnd && slotEnd > eStart);
+            const slotMs = slot.getTime();
+            const slotEndMs = slotEnd.getTime();
+
+            conflict = parsedEntries.some(e => {
+                return (slotMs < e.end && slotEndMs > e.start);
             });
             if (conflict) {
                 slot = addMinutes(slot, 30);
@@ -92,6 +94,10 @@ export function scheduleTasksAndHabits(
             start_time: slot.toISOString(),
             end_time: end_time.toISOString()
         });
+        parsedEntries.push({
+            start: slot.getTime(),
+            end: end_time.getTime()
+        });
     }
   }
 
@@ -104,11 +110,11 @@ export function scheduleTasksAndHabits(
     while (conflict) {
         currentSlot = findNextSlot(task.duration, currentSlot);
         const slotEnd = addMinutes(currentSlot, task.duration);
+        const currentSlotMs = currentSlot.getTime();
+        const slotEndMs = slotEnd.getTime();
 
-        conflict = entries.some(e => {
-            const eStart = new Date(e.start_time);
-            const eEnd = new Date(e.end_time);
-            return (currentSlot < eEnd && slotEnd > eStart);
+        conflict = parsedEntries.some(e => {
+            return (currentSlotMs < e.end && slotEndMs > e.start);
         });
 
         if (conflict) {
@@ -123,6 +129,10 @@ export function scheduleTasksAndHabits(
         task_id: task.id,
         start_time: currentSlot.toISOString(),
         end_time: end_time.toISOString()
+    });
+    parsedEntries.push({
+        start: currentSlot.getTime(),
+        end: end_time.getTime()
     });
 
     // Advance current slot for next task
