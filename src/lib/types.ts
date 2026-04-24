@@ -65,3 +65,41 @@ export interface GamificationUser {
   xp: number;
   coins: number;
 }
+
+export interface Group {
+  id: string;
+  name: string;
+  owner_id: string;
+  invite_code: string;
+}
+
+export interface GroupMember {
+  id: string;
+  group_id: string;
+  user_id: string;
+  joined_at: string;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  user_id: string;
+  username: string;
+  level: number;
+  xp: number;
+}
+
+export interface UserProfile {
+  username: string | null;
+  level: number;
+  xp: number;
+  recent_completed_todos: Array<{
+    id: string;
+    due_date: string;
+    completed_at: string;
+  }>;
+  recent_completed_habits: Array<{
+    id: string;
+    streak: number;
+    last_completed_date: string;
+  }>;
+}
