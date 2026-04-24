@@ -10,6 +10,7 @@ export interface Task {
   deadline?: string | null;
   created_at: string;
   completed?: boolean;
+  is_focus?: boolean;
 }
 
 export interface Habit {
@@ -46,6 +47,39 @@ export interface UserProgress {
   xp: number;
   level: number;
   next_level_xp: number;
+  title: string;
+}
+
+export interface MicroFeedback {
+  xp_gained: number;
+  coins_gained: number;
+  streak_updated: boolean;
+  new_streak?: number;
+}
+
+export interface WeeklySummary {
+  xp_gained: number;
+  todos_completed: number;
+  habits_completed: number;
+  highest_streak: number;
+}
+
+export interface GroupLeaderboardEntry {
+  user_id: string;
+  xp: number;
+  tasks_completed_today: number;
+  last_active_date: string;
+}
+
+export interface GroupRanking {
+  rank: number;
+  xp_difference_above: number;
+  xp_difference_below: number;
+}
+
+export interface GroupLeaderboardData {
+  ranking: GroupRanking;
+  leaderboard: GroupLeaderboardEntry[];
 }
 
 export interface DailyScore {
