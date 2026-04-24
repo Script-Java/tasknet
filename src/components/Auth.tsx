@@ -22,8 +22,20 @@ export function Auth() {
         if (error) throw error;
         toast.success('Account created successfully!');
       }
-    } catch (error: any) {
-      toast.error(error.error_description || error.message || 'Authentication failed');
+    } catch (error: unknown) {
+      let errorMessage = 'Authentication failed';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null) {
+        // Handle Supabase specific error structure safely
+        const err = error as Record<string, unknown>;
+        if (typeof err.error_description === 'string') {
+          errorMessage = err.error_description;
+        } else if (typeof err.message === 'string') {
+          errorMessage = err.message;
+        }
+      }
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
