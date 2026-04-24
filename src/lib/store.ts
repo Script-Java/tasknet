@@ -77,7 +77,7 @@ export async function getById<T extends 'tasks' | 'habits' | 'calendar_entries' 
 // }
 
 // Write/Update with pending change
-export async function upsertRecord(table: 'tasks' | 'habits' | 'calendar_entries', record: any) {
+export async function upsertRecord(table: 'tasks' | 'habits' | 'calendar_entries', record: Task | Habit | CalendarEntry) {
   const db = await initDB();
   const tx = db.transaction([table, 'pendingChanges'], 'readwrite');
 
@@ -135,7 +135,7 @@ export async function clearPendingChanges() {
 }
 
 // Sync overwrite directly from remote without adding to pendingChanges
-export async function syncOverwriteRecord(table: 'tasks' | 'habits' | 'calendar_entries', record: any) {
+export async function syncOverwriteRecord(table: 'tasks' | 'habits' | 'calendar_entries', record: Task | Habit | CalendarEntry) {
     const db = await initDB();
     await db.put(table, record);
 }
