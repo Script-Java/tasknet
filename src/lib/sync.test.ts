@@ -39,19 +39,21 @@ describe('syncWithSupabase', () => {
     mockSelectEq = vi.fn().mockResolvedValue({ data: [], error: null });
     mockSelect = vi.fn().mockReturnValue({ eq: mockSelectEq });
 
-    (supabase.from as any).mockReturnValue({
+    vi.mocked(supabase.from).mockReturnValue({
       upsert: mockUpsert,
       delete: mockDelete,
       select: mockSelect,
-    });
+    } as any);
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('should skip sync and return early if there is no logged-in user', async () => {
-    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: null } } as any);
+  it('skips sync if user is not logged in', async () => {
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: { session: null }
+    } as any);
 
     await syncWithSupabase();
 
@@ -61,15 +63,17 @@ describe('syncWithSupabase', () => {
   });
 
   it('should push pending changes, pull remote changes, and set last synced at', async () => {
-    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'u1' } } } } as any);
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: { session: { user: { id: 'u1' } } }
+    } as any);
 
     const pendingChanges: PendingChange[] = [
       { id: '1', table: 'tasks', action: 'INSERT', record_id: 't1', data: { id: 't1', title: 'Task 1' }, timestamp: '2023-01-01' },
       { id: '2', table: 'habits', action: 'UPDATE', record_id: 'h1', data: { id: 'h1', title: 'Habit 1' }, timestamp: '2023-01-01' },
       { id: '3', table: 'calendar_entries', action: 'DELETE', record_id: 'c1', timestamp: '2023-01-01' },
     ];
-    (store.getAll as any).mockResolvedValue(pendingChanges);
-    (store.getLastSyncedAt as any).mockResolvedValue('2023-01-01T00:00:00.000Z');
+    vi.mocked(store.getAll).mockResolvedValue(pendingChanges as any);
+    vi.mocked(store.getLastSyncedAt).mockResolvedValue('2023-01-01T00:00:00.000Z');
 
     const fakeTasksData = [{ id: 't1', title: 'Remote Task' }];
     mockSelectEq.mockResolvedValueOnce({ data: fakeTasksData, error: null }); // For tasks
@@ -90,7 +94,7 @@ describe('syncWithSupabase', () => {
 
     expect(store.clearPendingChanges).toHaveBeenCalled();
 
-    // Verify pulls
+    // Verify pulls with user scoping
     expect(store.getLastSyncedAt).toHaveBeenCalled();
     expect(mockSelectEq).toHaveBeenCalledWith('user_id', 'u1');
     expect(store.syncOverwriteRecord).toHaveBeenCalledWith('tasks', fakeTasksData[0]);
@@ -99,12 +103,14 @@ describe('syncWithSupabase', () => {
   });
 
   it('should handle push failures appropriately without clearing pending changes', async () => {
-    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'u1' } } } } as any);
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: { session: { user: { id: 'u1' } } }
+    } as any);
 
     const pendingChanges: PendingChange[] = [
       { id: '1', table: 'tasks', action: 'INSERT', record_id: 't1', data: { id: 't1' }, timestamp: '2023-01-01' },
     ];
-    (store.getAll as any).mockResolvedValue(pendingChanges);
+    vi.mocked(store.getAll).mockResolvedValue(pendingChanges as any);
 
     mockUpsert.mockResolvedValue({ error: new Error('Upsert Failed') });
 
@@ -112,12 +118,15 @@ describe('syncWithSupabase', () => {
 
     expect(store.clearPendingChanges).not.toHaveBeenCalled();
     expect(store.getLastSyncedAt).not.toHaveBeenCalled();
+    expect(console.error).toHaveBeenCalledWith('Sync failed:', expect.any(Error));
   });
 
   it('should handle pull errors correctly and continue to next table', async () => {
-    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'u1' } } } } as any);
-    (store.getAll as any).mockResolvedValue([]); // No pending changes
-    (store.getLastSyncedAt as any).mockResolvedValue('2023-01-01T00:00:00.000Z');
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: { session: { user: { id: 'u1' } } }
+    } as any);
+    vi.mocked(store.getAll).mockResolvedValue([]); // No pending changes
+    vi.mocked(store.getLastSyncedAt).mockResolvedValue('2023-01-01T00:00:00.000Z');
 
     mockSelectEq.mockResolvedValueOnce({ data: null, error: new Error('Select Failed') }); // For tasks
     const fakeHabitsData = [{ id: 'h1', title: 'Remote Habit' }];
