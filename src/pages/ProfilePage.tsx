@@ -16,6 +16,7 @@ const EMPTY_PROFILE: UserProfile = {
   id: '',
   username: null,
   avatar_url: null,
+  email: null,
   xp: 0,
   level: 0,
   recent_todos: [],
@@ -58,6 +59,7 @@ export function ProfilePage({ userId }: { userId: string }) {
           id: viewUserId,
           username: authUser?.user?.user_metadata?.username || authUser?.user?.email?.split('@')[0] || null,
           avatar_url: authUser?.user?.user_metadata?.avatar_url || null,
+          email: authUser?.user?.email || null,
           xp: 0,
           level: 0,
           recent_todos: [],
@@ -268,7 +270,7 @@ export function ProfilePage({ userId }: { userId: string }) {
                 ) : (
                   <div className="flex items-center space-x-2">
                     <h2 className="text-xl md:text-2xl font-black text-[#EEEEF8] truncate">
-                      {profile.username || 'Anonymous'}
+                      {profile.username || profile.email || 'Anonymous'}
                     </h2>
                     {isOwnProfile && (
                       <button onClick={() => { setEditing(true); setEditUsername(profile.username || ''); }} className="p-1 text-[#5C5780] hover:text-[#A78BFA] transition">

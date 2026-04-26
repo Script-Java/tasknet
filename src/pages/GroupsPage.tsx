@@ -384,7 +384,7 @@ function GroupDetail({
                     </div>
                     <div className="min-w-0">
                       <p className="font-semibold text-[#EEEEF8] truncate text-sm md:text-base">
-                        {entry.username || 'Anonymous'}
+                        {entry.username || entry.email || 'Anonymous'}
                         {entry.user_id === currentUserId && <span className="text-xs text-[#8B5CF6] ml-2">(You)</span>}
                       </p>
                       <p className="text-xs text-[#8E89B3]">Level {entry.level}</p>
@@ -427,7 +427,7 @@ function GroupDetail({
                     <div className="min-w-0">
                       <div className="flex items-center space-x-2">
                         <p className="font-semibold text-[#EEEEF8] truncate text-sm md:text-base">
-                          {member.username || 'Anonymous'}
+                          {member.username || member.email || 'Anonymous'}
                         </p>
                         {member.user_id === currentUserId && (
                           <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[rgba(139,92,246,0.2)] text-[#A78BFA] font-semibold border border-[rgba(139,92,246,0.3)]">You</span>

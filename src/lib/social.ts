@@ -95,16 +95,23 @@ export const social = {
 
     const userIds = members.map(m => m.user_id);
 
-    const { data: profiles, error } = await supabase
-      .from('users')
-      .select('id, username, avatar_url, xp')
-      .in('id', userIds);
+    const profilesRes = await supabase.from('users').select('id, username, avatar_url, xp').in('id', userIds);
+    let emailsData: { user_id: string; email: string }[] = [];
+    try {
+      const { data } = await supabase.rpc('get_user_emails', { p_user_ids: userIds });
+      emailsData = (data || []) as { user_id: string; email: string }[];
+    } catch { /* emails optional */ }
 
-    if (error) throw error;
+    const profiles = profilesRes.data || [];
 
     const profileMap = new Map<string, { username: string | null; avatar_url: string | null; xp: number }>();
-    for (const p of (profiles || [])) {
+    for (const p of profiles) {
       profileMap.set(p.id, { username: p.username, avatar_url: p.avatar_url, xp: p.xp });
+    }
+
+    const emailMap = new Map<string, string>();
+    for (const e of emailsData) {
+      if (e.email) emailMap.set(e.user_id, e.email);
     }
 
     return members.map(m => {
@@ -113,6 +120,7 @@ export const social = {
         ...m,
         username: profile.username,
         avatar_url: profile.avatar_url,
+        email: emailMap.get(m.user_id) || null,
         xp: profile.xp,
         level: Math.floor(Math.sqrt(profile.xp / 10)),
       };

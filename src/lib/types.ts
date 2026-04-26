@@ -117,6 +117,7 @@ export interface GroupMemberWithProfile {
   joined_at: string;
   username: string | null;
   avatar_url: string | null;
+  email: string | null;
   xp: number;
   level: number;
 }
@@ -125,6 +126,7 @@ export interface LeaderboardEntry {
   rank: number;
   user_id: string;
   username: string | null;
+  email: string | null;
   level: number;
   xp: number;
   avatar_url?: string | null;
@@ -134,6 +136,7 @@ export interface UserProfile {
   id: string;
   username: string | null;
   avatar_url: string | null;
+  email: string | null;
   xp: number;
   level: number;
   recent_todos: Array<{
