@@ -91,13 +91,15 @@ describe('syncWithSupabase', () => {
       { table: 'habits', action: 'DELETE', record_id: '2', data: null }
     ] as any);
 
-    const eqMock = vi.fn().mockResolvedValue({ error: null });
-    const deleteMock = vi.fn().mockReturnValue({ eq: eqMock });
+    const inMock = vi.fn().mockResolvedValue({ error: null });
+    const deleteMock = vi.fn().mockReturnValue({ in: inMock });
     const upsertMock = vi.fn().mockResolvedValue({ error: null });
 
     // For pullChanges
+    const gteMock = vi.fn().mockResolvedValue({ data: [{ id: '1' }], error: null });
+    const eqMock = vi.fn().mockReturnValue({ gte: gteMock });
     const selectMock = vi.fn().mockReturnValue({
-      eq: vi.fn().mockResolvedValue({ data: [{ id: '1' }], error: null }),
+      eq: eqMock,
     });
 
     vi.mocked(supabase.from).mockReturnValue({
