@@ -1,9 +1,9 @@
 import { openDB } from 'idb';
 import type { DBSchema, IDBPDatabase } from 'idb';
 import type { Task, Habit, CalendarEntry, PendingChange } from './types';
-import { v4 as uuidv4 } from 'uuid';
 
-interface TaskNetDB extends DBSchema {
+
+interface FidesDB extends DBSchema {
   tasks: {
     key: string;
     value: Task;
@@ -26,14 +26,14 @@ interface TaskNetDB extends DBSchema {
   };
 }
 
-const DB_NAME = 'TaskNetDB';
+const DB_NAME = 'FidesDB';
 const DB_VERSION = 1;
 
-let dbPromise: Promise<IDBPDatabase<TaskNetDB>> | null = null;
+let dbPromise: Promise<IDBPDatabase<FidesDB>> | null = null;
 
 export const initDB = () => {
   if (!dbPromise) {
-    dbPromise = openDB<TaskNetDB>(DB_NAME, DB_VERSION, {
+    dbPromise = openDB<FidesDB>(DB_NAME, DB_VERSION, {
       upgrade(db) {
         if (!db.objectStoreNames.contains('tasks')) db.createObjectStore('tasks', { keyPath: 'id' });
         if (!db.objectStoreNames.contains('habits')) db.createObjectStore('habits', { keyPath: 'id' });
@@ -87,7 +87,7 @@ export async function upsertRecord(table: 'tasks' | 'habits' | 'calendar_entries
   await tx.objectStore(table).put(record);
 
   const change: PendingChange = {
-    id: uuidv4(),
+    id: crypto.randomUUID(),
     table,
     action,
     record_id: record.id,
@@ -106,7 +106,7 @@ export async function deleteRecord(table: 'tasks' | 'habits' | 'calendar_entries
   await tx.objectStore(table).delete(id);
 
   const change: PendingChange = {
-    id: uuidv4(),
+    id: crypto.randomUUID(),
     table,
     action: 'DELETE',
     record_id: id,

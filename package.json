@@ -1,5 +1,5 @@
 {
-  "name": "tasknet",
+  "name": "fides",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -17,13 +17,11 @@
     "framer-motion": "^12.38.0",
     "idb": "^8.0.3",
     "lucide-react": "^1.8.0",
-    "nlp_compromise": "^7.0.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-hot-toast": "^2.6.0",
     "react-router-dom": "^7.14.2",
     "tailwindcss": "^4.2.4",
-    "uuid": "^14.0.0",
     "vite-plugin-pwa": "^1.2.0"
   },
   "devDependencies": {
@@ -33,7 +31,6 @@
     "@types/node": "^24.12.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^6.0.1",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.1.1",
