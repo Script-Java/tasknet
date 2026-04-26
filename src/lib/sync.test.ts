@@ -17,7 +17,12 @@ vi.mock('./store', () => ({
   clearPendingChanges: vi.fn(),
   getLastSyncedAt: vi.fn(),
   setLastSyncedAt: vi.fn(),
-  syncOverwriteRecord: vi.fn(),
+  initDB: vi.fn().mockResolvedValue({
+    transaction: vi.fn().mockReturnValue({
+      objectStore: vi.fn().mockReturnValue({ put: vi.fn() }),
+      done: Promise.resolve(),
+    }),
+  }),
 }));
 
 describe('syncWithSupabase', () => {
@@ -72,7 +77,7 @@ describe('syncWithSupabase', () => {
       select: vi.fn()
     } as any);
 
-    await expect(syncWithSupabase()).rejects.toThrow('Failed to push some changes, aborting clear');
+    await expect(syncWithSupabase()).rejects.toThrow('Failed to push some changes');
     expect(console.error).toHaveBeenCalledWith('Sync failed:', expect.any(Error));
   });
 
@@ -91,7 +96,9 @@ describe('syncWithSupabase', () => {
     const upsertMock = vi.fn().mockResolvedValue({ error: null });
 
     // For pullChanges
-    const selectMock = vi.fn().mockResolvedValue({ data: [{ id: '1' }], error: null });
+    const selectMock = vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ data: [{ id: '1' }], error: null }),
+    });
 
     vi.mocked(supabase.from).mockReturnValue({
       upsert: upsertMock,
@@ -104,7 +111,7 @@ describe('syncWithSupabase', () => {
     await syncWithSupabase();
 
     expect(store.clearPendingChanges).toHaveBeenCalled();
-    expect(store.syncOverwriteRecord).toHaveBeenCalled();
+    expect(store.initDB).toHaveBeenCalled();
     expect(store.setLastSyncedAt).toHaveBeenCalled();
   });
 });

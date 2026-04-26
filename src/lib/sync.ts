@@ -4,26 +4,29 @@ import {
   clearPendingChanges,
   getLastSyncedAt,
   setLastSyncedAt,
-  syncOverwriteRecord
+  initDB
 } from './store';
-import type { PendingChange } from './types';
+import type { PendingChange, TableName } from './types';
+
+let syncLock = false;
 
 export async function syncWithSupabase() {
-  const { data: sessionData } = await supabase.auth.getSession();
-  if (!sessionData?.session) {
-    console.log('User not logged in, skipping sync');
-    return;
-  }
+  if (syncLock) return;
+  syncLock = true;
 
   try {
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData?.session) {
+      console.log('User not logged in, skipping sync');
+      return;
+    }
+
     // 1. Push local changes
-    const pendingChanges = await getAll('pendingChanges');
+    const pendingChanges = await getAll('pendingChanges') as PendingChange[];
     if (pendingChanges.length > 0) {
       const success = await pushChanges(pendingChanges);
-      if (success) {
-        await clearPendingChanges();
-      } else {
-        throw new Error('Failed to push some changes, aborting clear');
+      if (!success) {
+        throw new Error('Failed to push some changes');
       }
     }
 
@@ -31,51 +34,76 @@ export async function syncWithSupabase() {
     const lastSyncedAt = await getLastSyncedAt();
     await pullChanges(lastSyncedAt, sessionData.session.user.id);
 
-    // Update sync time
+    // 3. Only clear pending + update sync time after everything succeeds
+    if (pendingChanges.length > 0) {
+      await clearPendingChanges();
+    }
     await setLastSyncedAt(new Date().toISOString());
   } catch (error) {
     console.error('Sync failed:', error);
     throw error;
+  } finally {
+    syncLock = false;
   }
 }
 
 async function pushChanges(changes: PendingChange[]) {
-  let allSuccess = true;
-  for (const change of changes) {
-    const { table, action, record_id, data } = change;
+  const tableGroups = new Map<TableName, { upserts: PendingChange[]; deletes: PendingChange[] }>();
 
+  for (const change of changes) {
+    const { table, action } = change;
+    if (!tableGroups.has(table)) {
+      tableGroups.set(table, { upserts: [], deletes: [] });
+    }
+    const group = tableGroups.get(table)!;
     if (action === 'INSERT' || action === 'UPDATE') {
+      group.upserts.push(change);
+    } else if (action === 'DELETE') {
+      group.deletes.push(change);
+    }
+  }
+
+  let allSuccess = true;
+
+  for (const [table, { upserts, deletes }] of tableGroups) {
+    // Batch upsert: send all rows for this table in one call
+    if (upserts.length > 0) {
+      const rows = upserts.map(c => c.data).filter(Boolean);
       const { error } = await supabase
         .from(table)
-        .upsert(data);
+        .upsert(rows);
 
       if (error) {
-        console.error(`Error pushing ${action} to ${table}:`, error);
+        console.error(`Error batch upserting to ${table}:`, error);
         allSuccess = false;
       }
-    } else if (action === 'DELETE') {
+    }
+
+    // Batch delete: use .in('id', [ids]) for all deletes in this table
+    if (deletes.length > 0) {
+      const ids = deletes.map(c => c.record_id);
       const { error } = await supabase
         .from(table)
         .delete()
-        .eq('id', record_id);
+        .in('id', ids);
 
       if (error) {
-        console.error(`Error pushing DELETE to ${table}:`, error);
+        console.error(`Error batch deleting from ${table}:`, error);
         allSuccess = false;
       }
     }
   }
+
   return allSuccess;
 }
 
 async function pullChanges(_lastSyncedAt: string | null, userId: string) {
   const tables: Array<'tasks' | 'habits' | 'calendar_entries'> = ['tasks', 'habits', 'calendar_entries'];
+  const db = await initDB();
 
   for (const table of tables) {
     const query = supabase.from(table).select('*').eq('user_id', userId);
 
-    // In a real app we would have a 'updated_at' or soft delete to only pull diffs.
-    // Here we pull all data for the user to ensure sync. Supabase RLS handles user scoping.
     const { data, error } = await query;
 
     if (error) {
@@ -83,11 +111,13 @@ async function pullChanges(_lastSyncedAt: string | null, userId: string) {
       continue;
     }
 
-    if (data) {
-      // Overwrite local records with remote records
+    if (data && data.length > 0) {
+      const tx = db.transaction(table, 'readwrite');
+      const store = tx.objectStore(table);
       for (const record of data) {
-        await syncOverwriteRecord(table, record);
+        store.put(record);
       }
+      await tx.done;
     }
   }
 }

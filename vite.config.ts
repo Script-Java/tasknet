@@ -12,10 +12,11 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'logo.png', 'robots.txt', 'apple-touch-icon.png'],
       manifest: {
-        name: 'TaskNet',
-        short_name: 'TaskNet',
+        name: 'Fides',
+        short_name: 'Fides',
         description: 'A modern, lightweight, mobile-first Progressive Web App habit tracker and todo app that automatically schedules tasks into a calendar.',
-        theme_color: '#ffffff',
+        theme_color: '#0D0B1E',
+        background_color: '#06040F',
         icons: [
           {
             src: 'logo.png',

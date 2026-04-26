@@ -1,21 +1,282 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --g-bg-deep: #06040F;
+  --g-bg-purple: #0D0B1E;
+  --g-bg-card: #15122A;
+  --g-bg-card-hover: #1C1836;
+  --g-surface: #1E1A3A;
+  --g-border: #2A2545;
+  --g-border-focus: #8B5CF6;
+  --g-accent: #8B5CF6;
+  --g-accent-bright: #A78BFA;
+  --g-accent-dim: #6C47D6;
+  --g-accent-glow: rgba(139, 92, 246, 0.35);
+  --g-blue: #64B5F6;
+  --g-green: #66BB6A;
+  --g-red: #EF5350;
+  --g-amber: #FFB74D;
+  --g-indigo: #818CF8;
+  --g-text: #EEEEF8;
+  --g-text-secondary: #8E89B3;
+  --g-text-dim: #5C5780;
+
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: rgba(139, 92, 246, 0.3);
+  color: white;
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: linear-gradient(165deg, #0D0B1E 0%, #060618 40%, #030208 100%);
+  color: var(--g-text);
+  font-family: var(--font-sans);
   margin: 0;
   padding: 0;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--g-border);
+  border-radius: 100px;
+}
+
+@keyframes slide-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes twinkle {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px var(--g-accent-glow); }
+  50% { box-shadow: 0 0 40px var(--g-accent-glow), 0 0 60px rgba(139, 92, 246, 0.1); }
+}
+
+.animate-in {
+  animation: slide-in-up 400ms var(--ease-out-expo) both;
+}
+
+.galaxy-card {
+  background: rgba(21, 18, 42, 0.75);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--g-border);
+  border-radius: 1.25rem;
+}
+
+.galaxy-card-glow {
+  background: rgba(21, 18, 42, 0.75);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 1.25rem;
+  box-shadow: 0 0 30px rgba(139, 92, 246, 0.06), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.galaxy-progress {
+  height: 6px;
+  background: rgba(42, 37, 69, 0.8);
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.galaxy-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--g-accent-dim), var(--g-accent), var(--g-accent-bright));
+  border-radius: 100px;
+  transition: width 0.8s var(--ease-out-expo);
+}
+
+.galaxy-input {
+  background: rgba(13, 11, 30, 0.6);
+  border: 1.5px solid var(--g-border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  color: var(--g-text);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  transition: all 200ms var(--ease-out-quart);
+  width: 100%;
+  outline: none;
+}
+
+.galaxy-input::placeholder {
+  color: var(--g-text-dim);
+}
+
+.galaxy-input:focus {
+  border-color: var(--g-accent);
+  box-shadow: 0 0 0 3px var(--g-accent-glow);
+}
+
+.galaxy-btn {
+  background: var(--g-accent);
+  color: white;
+  padding: 14px 28px;
+  border-radius: 14px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 15px;
+  border: none;
+  cursor: pointer;
+  transition: all 200ms var(--ease-out-quart);
+}
+
+.galaxy-btn:hover {
+  background: var(--g-accent-bright);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4);
+}
+
+.galaxy-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+}
+
+.galaxy-btn-ghost {
+  background: transparent;
+  color: var(--g-text-secondary);
+  padding: 10px 20px;
+  border-radius: 14px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 200ms var(--ease-out-quart);
+}
+
+.galaxy-btn-ghost:hover {
+  color: var(--g-text);
+  background: rgba(139, 92, 246, 0.08);
+}
+
+.galaxy-check {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  border: 2px solid var(--g-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 200ms var(--ease-out-quart);
+  flex-shrink: 0;
+}
+
+.galaxy-check.checked {
+  background: var(--g-accent);
+  border-color: var(--g-accent);
+}
+
+.galaxy-badge {
+  padding: 2px 10px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+@keyframes twinkle {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.metric-card {
+  background: rgba(21, 18, 42, 0.55);
+  backdrop-filter: blur(24px);
+  border: 1px solid var(--g-border);
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: transform 300ms var(--ease-out-expo), box-shadow 300ms var(--ease-out-expo), border-color 300ms var(--ease-out-quart);
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  border-color: rgba(139, 92, 246, 0.15);
+}
+
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+}
+
+@keyframes metric-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.metric-card-animate {
+  animation: metric-enter 500ms var(--ease-out-expo) both;
+}
+
+.metric-value {
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.metric-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--g-text-dim);
+}
+
+.metric-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }

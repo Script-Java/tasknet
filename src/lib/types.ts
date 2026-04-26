@@ -5,11 +5,14 @@ export interface Task {
   id: string;
   user_id: string;
   title: string;
-  duration: number; // in minutes
+  duration: number;
   priority: Priority;
   deadline?: string | null;
   created_at: string;
   completed?: boolean;
+  completed_at?: string | null;
+  date?: string;
+  overdue?: boolean;
 }
 
 export interface Habit {
@@ -19,6 +22,8 @@ export interface Habit {
   frequency: Frequency;
   preferred_time?: string | null;
   duration: number;
+  streak?: number;
+  last_completed_date?: string | null;
 }
 
 export interface CalendarEntry {
@@ -40,6 +45,27 @@ export interface PendingChange {
   record_id: string;
   data?: any;
   timestamp: string;
+}
+
+export interface HabitCompletion {
+  id: string;
+  habit_id: string;
+  user_id: string;
+  completed_at: string;
+  completed_at_ts?: string | null;
+}
+
+export interface BadgeProgress {
+  user_id: string;
+  progress: Record<string, unknown>;
+  updated_at: string;
+}
+
+export interface UserStats {
+  xp: number;
+  coins: number;
+  level: number;
+  next_level_xp: number;
 }
 
 export interface UserProgress {
@@ -64,4 +90,60 @@ export interface GamificationUser {
   id: string;
   xp: number;
   coins: number;
+  username: string | null;
+  avatar_url: string | null;
+}
+
+export interface Group {
+  id: string;
+  name: string;
+  owner_id: string;
+  invite_code: string;
+  created_at: string;
+  member_count?: number;
+}
+
+export interface GroupMember {
+  id: string;
+  group_id: string;
+  user_id: string;
+  joined_at: string;
+}
+
+export interface GroupMemberWithProfile {
+  id: string;
+  group_id: string;
+  user_id: string;
+  joined_at: string;
+  username: string | null;
+  avatar_url: string | null;
+  xp: number;
+  level: number;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  user_id: string;
+  username: string | null;
+  level: number;
+  xp: number;
+  avatar_url?: string | null;
+}
+
+export interface UserProfile {
+  id: string;
+  username: string | null;
+  avatar_url: string | null;
+  xp: number;
+  level: number;
+  recent_todos: Array<{
+    id: string;
+    title: string;
+    completed_at: string;
+  }>;
+  recent_habits: Array<{
+    id: string;
+    title: string;
+    last_completed_date: string;
+  }>;
 }

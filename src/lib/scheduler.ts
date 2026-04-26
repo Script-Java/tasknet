@@ -1,5 +1,5 @@
 import type { Task, Habit, CalendarEntry } from './types';
-import { v4 as uuidv4 } from 'uuid';
+
 import { addMinutes, startOfDay, isAfter } from 'date-fns';
 
 export function scheduleTasksAndHabits(
@@ -73,7 +73,8 @@ export function scheduleTasksAndHabits(
 
         // Find non-overlapping slot (simplistic)
         let conflict = true;
-        while (conflict) {
+        let attempts = 0;
+        while (conflict && attempts < 500) {
             const slotEnd = addMinutes(slot, habit.duration);
             const slotMs = slot.getTime();
             const slotEndMs = slotEnd.getTime();
@@ -84,11 +85,13 @@ export function scheduleTasksAndHabits(
             if (conflict) {
                 slot = addMinutes(slot, 30);
             }
+            attempts++;
         }
+        if (conflict) continue;
 
         const end_time = addMinutes(slot, habit.duration);
         entries.push({
-            id: uuidv4(),
+            id: crypto.randomUUID(),
             user_id: userId,
             habit_id: habit.id,
             start_time: slot.toISOString(),
@@ -107,7 +110,8 @@ export function scheduleTasksAndHabits(
 
   for (const task of pendingTasks) {
     let conflict = true;
-    while (conflict) {
+    let attempts = 0;
+    while (conflict && attempts < 500) {
         currentSlot = findNextSlot(task.duration, currentSlot);
         const slotEnd = addMinutes(currentSlot, task.duration);
         const currentSlotMs = currentSlot.getTime();
@@ -120,11 +124,13 @@ export function scheduleTasksAndHabits(
         if (conflict) {
             currentSlot = addMinutes(currentSlot, 30); // Try 30 mins later
         }
+        attempts++;
     }
+    if (conflict) continue;
 
     const end_time = addMinutes(currentSlot, task.duration);
     entries.push({
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         user_id: userId,
         task_id: task.id,
         start_time: currentSlot.toISOString(),

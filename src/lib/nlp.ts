@@ -1,17 +1,34 @@
-import * as chrono from 'chrono-node';
 import type { Task, Habit, Priority, Frequency } from './types';
-import { v4 as uuidv4 } from 'uuid';
 
-export function parseNaturalLanguageInput(input: string, userId: string): { type: 'task' | 'habit', data: Partial<Task> | Partial<Habit> } | null {
+let chronoModule: typeof import('chrono-node') | null = null;
+let chronoLoadPromise: Promise<typeof import('chrono-node')> | null = null;
+
+async function loadChrono() {
+  if (chronoModule) return chronoModule;
+  if (chronoLoadPromise) return chronoLoadPromise;
+  chronoLoadPromise = import('chrono-node').then(mod => {
+    chronoModule = mod;
+    return mod;
+  });
+  return chronoLoadPromise;
+}
+
+export function isChronoLoaded(): boolean {
+  return chronoModule !== null;
+}
+
+export async function parseNaturalLanguageInput(
+  input: string,
+  userId: string
+): Promise<{ type: 'task' | 'habit'; data: Partial<Task> | Partial<Habit> } | null> {
+  const chrono = await loadChrono();
+
   const lowerInput = input.toLowerCase();
 
-  // Basic heuristic: if it contains "every", "daily", "weekly", it's a habit
   const isHabit = lowerInput.includes('every') || lowerInput.includes('daily') || lowerInput.includes('weekly');
 
-  // Extract dates
   const parsedDate = chrono.parseDate(input);
 
-  // Remove the date parts from the string for the title (rough heuristic)
   let title = input;
   const parsedResults = chrono.parse(input);
   if (parsedResults.length > 0) {
@@ -19,9 +36,8 @@ export function parseNaturalLanguageInput(input: string, userId: string): { type
     title = title.replace(textToReplace, '').trim();
   }
 
-  // Remove stop words like 'at', 'by' if trailing
   title = title.replace(/\b(at|by|on)\s*$/i, '').trim();
-  if (!title) title = input; // fallback
+  if (!title) title = input;
 
   if (isHabit) {
     let frequency: Frequency = 'daily';
@@ -30,11 +46,11 @@ export function parseNaturalLanguageInput(input: string, userId: string): { type
     return {
       type: 'habit',
       data: {
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         user_id: userId,
-        title,
+        title: title.slice(0, 200).trim(),
         frequency,
-        duration: 30, // default
+        duration: 30,
         preferred_time: parsedDate ? parsedDate.toISOString() : null
       }
     };
@@ -47,14 +63,15 @@ export function parseNaturalLanguageInput(input: string, userId: string): { type
     return {
       type: 'task',
       data: {
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         user_id: userId,
-        title,
-        duration: 30, // default
+        title: title.slice(0, 200).trim(),
+        duration: 30,
         priority,
         deadline: parsedDate ? parsedDate.toISOString() : null,
         created_at: new Date().toISOString(),
-        completed: false
+        completed: false,
+        date: new Date().toISOString().split('T')[0]
       }
     };
   }
