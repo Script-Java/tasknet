@@ -57,6 +57,8 @@ export function HabitsPage({ userId }: { userId: string }) {
 
     setSyncingHabitId(habit.id);
 
+    try { await syncWithSupabase(); } catch {}
+
     const updatedHabit: Habit = {
       ...habit,
       streak: (habit.streak || 0) + 1,

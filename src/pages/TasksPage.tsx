@@ -69,6 +69,11 @@ export function TasksPage({ userId }: { userId: string }) {
 
   const toggleTaskCompletion = async (task: Task) => {
     const wasCompleted = task.completed;
+
+    if (!wasCompleted) {
+      try { await syncWithSupabase(); } catch {}
+    }
+
     const updatedTask = {
       ...task,
       completed: !task.completed,

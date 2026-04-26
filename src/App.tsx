@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy, Suspense } from 'react'
+import { useEffect, useState, lazy, Suspense, useRef } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import type { Session } from '@supabase/supabase-js'
@@ -8,6 +8,7 @@ import { supabase } from './lib/supabase'
 import { social } from './lib/social'
 import { BadgeProvider } from './contexts/BadgeContext'
 import { useAutoSync } from './hooks/useAutoSync'
+import { clearAllUserData } from './lib/store'
 import { Dashboard } from './pages/Dashboard'
 
 const TasksPage = lazy(() => import('./pages/TasksPage').then(m => ({ default: m.TasksPage })))
@@ -19,8 +20,18 @@ const ProfilePage = lazy(() => import('./pages/ProfilePage').then(m => ({ defaul
 function App() {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const prevUserId = useRef<string | null>(null)
 
   useAutoSync()
+
+  useEffect(() => {
+    if (session?.user && session.user.id !== prevUserId.current) {
+      if (prevUserId.current) {
+        clearAllUserData().catch(() => {})
+      }
+      prevUserId.current = session.user.id
+    }
+  }, [session])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {

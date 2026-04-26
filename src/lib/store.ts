@@ -134,6 +134,19 @@ export async function clearPendingChanges() {
     await db.clear('pendingChanges');
 }
 
+export async function clearAllUserData() {
+    const db = await initDB();
+    const tx = db.transaction(['tasks', 'habits', 'calendar_entries', 'pendingChanges', 'syncMeta'], 'readwrite');
+    await Promise.all([
+      tx.objectStore('tasks').clear(),
+      tx.objectStore('habits').clear(),
+      tx.objectStore('calendar_entries').clear(),
+      tx.objectStore('pendingChanges').clear(),
+      tx.objectStore('syncMeta').clear(),
+    ]);
+    await tx.done;
+}
+
 // Sync overwrite directly from remote without adding to pendingChanges
 export async function syncOverwriteRecord(table: 'tasks' | 'habits' | 'calendar_entries', record: any) {
     const db = await initDB();
