@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { getAll, initDB } from '../lib/store';
 import type { Task, Habit, CalendarEntry } from '../lib/types';
-import { format, parseISO, startOfWeek, addDays, isSameDay, isBefore, isToday } from 'date-fns';
+import { format, parseISO, startOfWeek, addDays, isSameDay, isBefore, isToday, startOfDay } from 'date-fns';
 import { Plus, CalendarClock } from 'lucide-react';
 
 export function CalendarPage({ userId }: { userId: string }) {

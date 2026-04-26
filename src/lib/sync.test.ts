@@ -91,8 +91,9 @@ describe('syncWithSupabase', () => {
       { table: 'habits', action: 'DELETE', record_id: '2', data: null }
     ] as any);
 
+    const inMock = vi.fn().mockResolvedValue({ error: null });
     const eqMock = vi.fn().mockResolvedValue({ error: null });
-    const deleteMock = vi.fn().mockReturnValue({ eq: eqMock });
+    const deleteMock = vi.fn().mockReturnValue({ eq: eqMock, in: inMock });
     const upsertMock = vi.fn().mockResolvedValue({ error: null });
 
     // For pullChanges
