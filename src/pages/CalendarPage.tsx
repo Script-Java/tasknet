@@ -155,13 +155,13 @@ export function CalendarPage({ userId }: { userId: string }) {
   }, []);
 
   return (
-    <div className="space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 h-full flex flex-col">
+    <div className="space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
           <h1 className="text-3xl md:text-4xl font-black tracking-tight text-[#EEEEF8]">Calendar</h1>
           <p className="text-[#8E89B3] mt-1 md:mt-2 text-base md:text-lg">Your auto-generated schedule.</p>
       </div>
 
-      <div className="galaxy-card flex-1 rounded-[1.5rem] md:rounded-[2rem] flex flex-col overflow-hidden">
+      <div className="galaxy-card rounded-[1.5rem] md:rounded-[2rem]">
 
         {/* Weekly Header */}
         <div className="border-b border-[#2A2545] bg-[rgba(21,18,42,0.5)] px-1.5 py-2 md:p-4">
@@ -205,7 +205,7 @@ export function CalendarPage({ userId }: { userId: string }) {
         </div>
 
         {/* Daily Details View */}
-<div className="flex-1 overflow-y-auto p-2 md:p-6 relative">
+<div className="p-2 md:p-6 relative">
              <div className="max-w-3xl mx-auto relative">
                   {/* Timeline Background */}
                   <div className="absolute left-10 md:left-16 top-0 bottom-0 w-px bg-[#2A2545]"></div>

@@ -36,6 +36,11 @@
   color: white;
 }
 
+html {
+  background: #06040F;
+  overscroll-behavior: none;
+}
+
 body {
   background: linear-gradient(165deg, #0D0B1E 0%, #060618 40%, #030208 100%);
   color: var(--g-text);
@@ -45,6 +50,7 @@ body {
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: contain;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
