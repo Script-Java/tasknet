@@ -8,7 +8,7 @@ import { dispatchGamificationUpdate } from '../lib/gamificationEvents';
 import { buildBadgeContext, evaluateBadges, unlockBadges, saveBadgeProgress } from '../lib/badgeEvaluator';
 import { useBadgeContext } from '../contexts/BadgeContext';
 import type { Task } from '../lib/types';
-import { Trash2, RefreshCw, Star, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { Trash2, RefreshCw, Star, AlertTriangle, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 

@@ -466,7 +466,7 @@ export function ProfilePage({ userId }: { userId: string }) {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-[#EEEEF8] truncate">{h.title}</p>
-                        <p className="text-xs text-[#5C5780] mt-0.5">{h.frequency} &bull; {h.duration}m{h.streak > 0 ? <> &bull; {h.streak} day streak</> : ''}{h.last_completed_date ? <> &bull; Last: {new Date(h.last_completed_date).toLocaleDateString()}</> : ''}</p>
+                        <p className="text-xs text-[#5C5780] mt-0.5">{h.frequency} &bull; {h.duration}m{(h.streak ?? 0) > 0 ? <> &bull; {h.streak} day streak</> : ''}{h.last_completed_date ? <> &bull; Last: {new Date(h.last_completed_date).toLocaleDateString()}</> : ''}</p>
                       </div>
                     </div>
                   </div>
