@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy, Suspense, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import type { Session } from '@supabase/supabase-js'
@@ -10,11 +10,10 @@ import { BadgeProvider } from './contexts/BadgeContext'
 import { useAutoSync } from './hooks/useAutoSync'
 import { clearAllUserData } from './lib/store'
 import { Dashboard } from './pages/Dashboard'
-
-const TasksPage = lazy(() => import('./pages/TasksPage').then(m => ({ default: m.TasksPage })))
-const CalendarPage = lazy(() => import('./pages/CalendarPage').then(m => ({ default: m.CalendarPage })))
-const HabitsPage = lazy(() => import('./pages/HabitsPage').then(m => ({ default: m.HabitsPage })))
-const ProfilePage = lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })))
+import { TasksPage } from './pages/TasksPage'
+import { CalendarPage } from './pages/CalendarPage'
+import { HabitsPage } from './pages/HabitsPage'
+import { ProfilePage } from './pages/ProfilePage'
 
 function App() {
   const [session, setSession] = useState<Session | null>(null)
@@ -69,11 +68,6 @@ function App() {
           <Auth />
         ) : (
           <Layout>
-            <Suspense fallback={
-              <div className="flex items-center justify-center py-20">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8B5CF6]" />
-              </div>
-            }>
               <Routes>
                 <Route path="/" element={<Dashboard userId={session.user.id} />} />
                 <Route path="/tasks" element={<TasksPage userId={session.user.id} />} />
@@ -83,7 +77,6 @@ function App() {
                 <Route path="/profile/:id" element={<ProfilePage userId={session.user.id} />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
-            </Suspense>
           </Layout>
         )}
       </BadgeProvider>

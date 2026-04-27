@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { getAll, initDB } from '../lib/store';
 import { syncWithSupabase } from '../lib/sync';
 import { gamification, getTaskXp } from '../lib/gamification';
+import { onGamificationUpdate } from '../lib/gamificationEvents';
 import { buildBadgeContext, evaluateBadges, unlockBadges, saveBadgeProgress } from '../lib/badgeEvaluator';
 import { useBadgeContext } from '../contexts/BadgeContext';
 import { BADGES } from '../lib/badges';
@@ -53,6 +54,10 @@ export function Dashboard({ userId }: { userId: string }) {
     loadData();
     loadStats();
     gamification.markOverdueTasks(userId).catch(() => {});
+    const cleanup = onGamificationUpdate(() => {
+      loadStats();
+    });
+    return () => cleanup();
   }, [userId, loadData, loadStats]);
 
   const handleSync = async () => {

@@ -4,6 +4,7 @@ import { TaskForm } from '../components/TaskForm';
 import { getAll, initDB, deleteRecord, upsertRecord } from '../lib/store';
 import { syncWithSupabase } from '../lib/sync';
 import { gamification, getTaskXp, getTaskCoins } from '../lib/gamification';
+import { dispatchGamificationUpdate } from '../lib/gamificationEvents';
 import { buildBadgeContext, evaluateBadges, unlockBadges, saveBadgeProgress } from '../lib/badgeEvaluator';
 import { useBadgeContext } from '../contexts/BadgeContext';
 import type { Task } from '../lib/types';
@@ -88,6 +89,7 @@ export function TasksPage({ userId }: { userId: string }) {
       toast.success(`Task completed! +${xpEarned} XP, +${coinsEarned} coin${coinsEarned !== 1 ? 's' : ''}`, { icon: '🎉' });
       try {
         await gamification.completeTask(task.id);
+        dispatchGamificationUpdate();
         await runBadgeCheck('task_complete', {
           xpDelta: xpEarned,
           lastAction: { type: 'task', id: task.id, completedAt: new Date() },

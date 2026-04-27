@@ -4,6 +4,7 @@ import { HabitForm } from '../components/HabitForm';
 import { getAll, initDB, deleteRecord, upsertRecord } from '../lib/store';
 import { syncWithSupabase } from '../lib/sync';
 import { gamification } from '../lib/gamification';
+import { dispatchGamificationUpdate } from '../lib/gamificationEvents';
 import { buildBadgeContext, evaluateBadges, unlockBadges, saveBadgeProgress } from '../lib/badgeEvaluator';
 import { useBadgeContext } from '../contexts/BadgeContext';
 import type { Habit } from '../lib/types';
@@ -73,6 +74,7 @@ export function HabitsPage({ userId }: { userId: string }) {
 
     try {
       await gamification.completeHabit(habit.id);
+      dispatchGamificationUpdate();
       await runBadgeCheck('habit_complete', {
         xpDelta: 3,
         lastAction: { type: 'habit', id: habit.id, completedAt: new Date() },

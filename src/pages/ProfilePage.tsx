@@ -9,6 +9,7 @@ import type { UserProfile, UserStats, Achievement } from '../lib/types';
 import { User, Award, CheckCircle, Zap, Edit3, Save, X, Camera, Clock, Settings as SettingsIcon, Trophy, TrendingUp, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
+import { onGamificationUpdate } from '../lib/gamificationEvents';
 
 type Tab = 'profile' | 'preferences' | 'achievements' | 'groups';
 
@@ -108,7 +109,13 @@ export function ProfilePage({ userId }: { userId: string }) {
     ensureAndLoadProfile();
     loadStats();
     loadOthersAchievements();
-  }, [ensureAndLoadProfile, loadStats]);
+    const cleanup = onGamificationUpdate(() => {
+      ensureAndLoadProfile();
+      loadStats();
+      loadOthersAchievements();
+    });
+    return () => cleanup();
+  }, [ensureAndLoadProfile, loadStats, loadOthersAchievements]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -418,7 +425,7 @@ export function ProfilePage({ userId }: { userId: string }) {
       {/* Achievements Tab */}
       {tab === 'achievements' && (
         <div className="space-y-6">
-          {stats && (
+          {isOwnProfile && stats && (
             <div className="galaxy-card p-4 md:p-6">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">

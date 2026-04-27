@@ -5,12 +5,27 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  build: {
+    chunkSizeWarningLimit: 800,
+  },
   plugins: [
     react(),
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'logo.png', 'robots.txt', 'apple-touch-icon.png'],
+      workbox: {
+        navigateFallback: null,
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/tasknet-app\.vercel\.app\/$/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'start-url',
+            },
+          },
+        ],
+      },
       manifest: {
         name: 'Fides',
         short_name: 'Fides',
