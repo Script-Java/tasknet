@@ -82,6 +82,7 @@ export function ProfilePage({ userId }: { userId: string }) {
   }, [viewUserId, isOwnProfile]);
 
   const loadStats = useCallback(async () => {
+    if (!isOwnProfile) return;
     try {
       const [s, a] = await Promise.all([
         gamification.getUserStats(userId),
@@ -92,11 +93,21 @@ export function ProfilePage({ userId }: { userId: string }) {
     } catch {
       // Stats not available yet
     }
-  }, [userId]);
+  }, [userId, isOwnProfile]);
+
+  const loadOthersAchievements = useCallback(async () => {
+    if (isOwnProfile) return;
+    try {
+      const a = await gamification.getAchievements(viewUserId);
+      setAchievements(a);
+    } catch {
+    }
+  }, [viewUserId, isOwnProfile]);
 
   useEffect(() => {
     ensureAndLoadProfile();
     loadStats();
+    loadOthersAchievements();
   }, [ensureAndLoadProfile, loadStats]);
 
   useEffect(() => {
@@ -191,34 +202,35 @@ export function ProfilePage({ userId }: { userId: string }) {
       : 0
     : 0;
 
-  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
+  const tabs: { id: Tab; label: string; icon: React.ReactNode; ownerOnly?: boolean }[] = [
     { id: 'profile', label: 'Profile', icon: <User className="w-4 h-4" /> },
-    { id: 'preferences', label: 'Settings', icon: <SettingsIcon className="w-4 h-4" /> },
     { id: 'achievements', label: 'Achievements', icon: <Trophy className="w-4 h-4" /> },
-    { id: 'groups', label: 'Groups', icon: <Users className="w-4 h-4" /> },
+    { id: 'preferences', label: 'Settings', icon: <SettingsIcon className="w-4 h-4" />, ownerOnly: true },
+    { id: 'groups', label: 'Groups', icon: <Users className="w-4 h-4" />, ownerOnly: true },
   ];
+
+  const visibleTabs = tabs.filter(t => isOwnProfile || !t.ownerOnly);
 
   return (
     <div className="space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-3xl">
       <div>
         <h1 className="text-3xl md:text-4xl font-black tracking-tight text-[#EEEEF8]">
-          {isOwnProfile ? 'Profile' : `${profile.username || 'User'}'s Profile`}
+          {isOwnProfile ? 'Profile' : `${profile.username || profile.email || 'User'}'s Profile`}
         </h1>
         <p className="text-[#8E89B3] mt-1 md:mt-2 text-base md:text-lg">
           {isOwnProfile ? 'Your account and progress.' : 'Viewing their progress.'}
         </p>
       </div>
 
-      {isOwnProfile && (
-        <div className="flex gap-1 bg-[rgba(21,18,42,0.75)] p-1 rounded-2xl border border-[#2A2545] overflow-x-auto custom-scrollbar -mx-1 px-1 sm:mx-0 sm:px-0">
-          {tabs.map(t => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`flex-1 min-w-0 flex items-center justify-center space-x-1 md:space-x-2 py-2.5 px-2 md:px-3 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
-                tab === t.id
-                  ? 'bg-[rgba(139,92,246,0.2)] text-[#A78BFA] border border-[rgba(139,92,246,0.3)]'
-                  : 'text-[#5C5780] hover:text-[#8E89B3]'
+      <div className="flex gap-1 bg-[rgba(21,18,42,0.75)] p-1 rounded-2xl border border-[#2A2545] overflow-x-auto custom-scrollbar -mx-1 px-1 sm:mx-0 sm:px-0">
+        {visibleTabs.map(t => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`flex-1 min-w-0 flex items-center justify-center space-x-1 md:space-x-2 py-2.5 px-2 md:px-3 rounded-xl text-xs md:text-sm font-semibold transition-all whitespace-nowrap ${
+              tab === t.id
+                ? 'bg-[rgba(139,92,246,0.2)] text-[#A78BFA] border border-[rgba(139,92,246,0.3)]'
+                : 'text-[#5C5780] hover:text-[#8E89B3]'
               }`}
             >
               {t.icon}
@@ -226,7 +238,6 @@ export function ProfilePage({ userId }: { userId: string }) {
             </button>
           ))}
         </div>
-      )}
 
       {/* Profile Tab */}
       {tab === 'profile' && (

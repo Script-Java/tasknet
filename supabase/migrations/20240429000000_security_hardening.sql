@@ -1,5 +1,7 @@
 -- ============================================================
 -- Performance, Security & Integrity Hardening Migration
+-- Only creates/replaces what is needed without conflicting
+-- with earlier migrations.
 -- ============================================================
 
 -- ============================================================
@@ -143,8 +145,7 @@ BEGIN
 END;
 $$;
 
--- 2.1b: Add UNIQUE constraint on habit_completions(habit_id, completed_at)
--- (This already exists in the original schema, but ensure it is enforced)
+-- 2.1b: Ensure UNIQUE constraint on habit_completions(habit_id, completed_at)
 DO $$
 BEGIN
     IF NOT EXISTS (
@@ -159,18 +160,10 @@ END $$;
 
 -- ============================================================
 -- 2.2: SECURITY DEFINER helper for Group RLS
---      Eliminates infinite recursion on group_members SELECT
+--      Drop only the SELECT policy on group_members (the one
+--      that causes recursion) and recreate using the helper.
+--      Leave INSERT/DELETE policies untouched.
 -- ============================================================
-
--- Drop existing policies that may cause recursion
-DROP POLICY IF EXISTS "Members can view group members" ON group_members;
-DROP POLICY IF EXISTS "Users can join groups" ON group_members;
-DROP POLICY IF EXISTS "Members can leave groups" ON group_members;
-DROP POLICY IF EXISTS "Group members viewable by authenticated" ON group_members;
-DROP POLICY IF EXISTS "Groups are viewable by authenticated users" ON groups;
-DROP POLICY IF EXISTS "Users can create groups" ON groups;
-DROP POLICY IF EXISTS "Group owner can update" ON groups;
-DROP POLICY IF EXISTS "Group owner can delete" ON groups;
 
 -- Helper function: checks if the current user is a member of the given group
 -- Uses SECURITY DEFINER to bypass RLS when checking membership
@@ -186,31 +179,15 @@ AS $$
     );
 $$;
 
--- Groups RLS policies
-CREATE POLICY "Groups are viewable by authenticated users" ON groups
-    FOR SELECT USING (auth.role() = 'authenticated');
+-- Drop the SELECT policy that can cause recursion and recreate it
+DROP POLICY IF EXISTS "Members can view group members" ON group_members;
+DROP POLICY IF EXISTS "Group members viewable by authenticated" ON group_members;
 
-CREATE POLICY "Users can create groups" ON groups
-    FOR INSERT WITH CHECK (auth.uid() = owner_id);
-
-CREATE POLICY "Group owner can update" ON groups
-    FOR UPDATE USING (auth.uid() = owner_id);
-
-CREATE POLICY "Group owner can delete" ON groups
-    FOR DELETE USING (auth.uid() = owner_id);
-
--- Group_members RLS policies using the helper (no recursion)
-CREATE POLICY "Members can view group members" ON group_members
+CREATE POLICY "Group members viewable by authenticated" ON group_members
     FOR SELECT USING (
         is_group_member(group_id)
         OR EXISTS (SELECT 1 FROM groups WHERE id = group_id AND owner_id = auth.uid())
     );
-
-CREATE POLICY "Users can join groups" ON group_members
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Members can leave groups" ON group_members
-    FOR DELETE USING (auth.uid() = user_id);
 
 -- ============================================================
 -- 2.3: Sanitize join_group invite codes
@@ -226,15 +203,12 @@ DECLARE
     v_user_id UUID := auth.uid();
     v_clean_code TEXT;
 BEGIN
-    -- Sanitize input: trim whitespace, convert to uppercase
     v_clean_code := upper(trim(p_invite_code));
 
-    -- Validate: must be exactly 8 alphanumeric characters
     IF v_clean_code !~ '^[A-Z0-9]{8}$' THEN
         RAISE EXCEPTION 'Invalid invite code format. Code must be 8 alphanumeric characters.';
     END IF;
 
-    -- Ensure user exists in users table
     INSERT INTO users (id, xp, coins)
     VALUES (v_user_id, 0, 0)
     ON CONFLICT (id) DO NOTHING;

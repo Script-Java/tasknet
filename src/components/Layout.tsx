@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LogOut, Calendar, Home, Repeat, CheckSquare, User, Users } from 'lucide-react';
+import { LogOut, Calendar, Home, Repeat, CheckSquare, User } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -54,10 +54,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Repeat className="w-5 h-5" />
               <span className="hidden md:inline">Habits</span>
             </NavLink>
-            <NavLink to="/groups" className={navItemClass}>
-              <Users className="w-5 h-5" />
-              <span className="hidden md:inline">Groups</span>
-            </NavLink>
             <NavLink to="/profile" className={navItemClass}>
               <User className="w-5 h-5" />
               <span className="hidden md:inline">Profile</span>
@@ -107,10 +103,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <NavLink to="/habits" className={mobileNavClass}>
           <Repeat className="w-5 h-5" />
           <span className="text-[10px] font-medium leading-tight">Habits</span>
-        </NavLink>
-        <NavLink to="/groups" className={mobileNavClass}>
-          <Users className="w-5 h-5" />
-          <span className="text-[10px] font-medium leading-tight">Groups</span>
         </NavLink>
         <NavLink to="/profile" className={mobileNavClass}>
           <User className="w-5 h-5" />

@@ -14,7 +14,6 @@ import { Dashboard } from './pages/Dashboard'
 const TasksPage = lazy(() => import('./pages/TasksPage').then(m => ({ default: m.TasksPage })))
 const CalendarPage = lazy(() => import('./pages/CalendarPage').then(m => ({ default: m.CalendarPage })))
 const HabitsPage = lazy(() => import('./pages/HabitsPage').then(m => ({ default: m.HabitsPage })))
-const GroupsPage = lazy(() => import('./pages/GroupsPage').then(m => ({ default: m.GroupsPage })))
 const ProfilePage = lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })))
 
 function App() {
@@ -80,7 +79,6 @@ function App() {
                 <Route path="/tasks" element={<TasksPage userId={session.user.id} />} />
                 <Route path="/calendar" element={<CalendarPage userId={session.user.id} />} />
                 <Route path="/habits" element={<HabitsPage userId={session.user.id} />} />
-                <Route path="/groups" element={<GroupsPage userId={session.user.id} />} />
                 <Route path="/profile" element={<ProfilePage userId={session.user.id} />} />
                 <Route path="/profile/:id" element={<ProfilePage userId={session.user.id} />} />
                 <Route path="*" element={<Navigate to="/" replace />} />

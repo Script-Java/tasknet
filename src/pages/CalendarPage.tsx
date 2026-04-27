@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { getAll, initDB } from '../lib/store';
 import type { Task, Habit, CalendarEntry } from '../lib/types';
 import { format, parseISO, startOfWeek, addDays, isSameDay, isBefore, isToday, startOfDay } from 'date-fns';
-import { Plus, CalendarClock } from 'lucide-react';
+import { Plus, CalendarClock, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export function CalendarPage({ userId }: { userId: string }) {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -11,6 +11,7 @@ export function CalendarPage({ userId }: { userId: string }) {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [weekOffset, setWeekOffset] = useState(0);
   const [isScheduling, setIsScheduling] = useState(false);
   const naturalInputRef = useRef<HTMLInputElement | null>(null);
   const workerRef = useRef<Worker | null>(null);
@@ -81,8 +82,33 @@ export function CalendarPage({ userId }: { userId: string }) {
     return () => clearInterval(interval);
   }, []);
 
-  const startDate = useMemo(() => startOfWeek(selectedDate, { weekStartsOn: 1 }), [selectedDate]);
+  const startDate = useMemo(() => {
+    const base = startOfWeek(selectedDate, { weekStartsOn: 1 });
+    base.setDate(base.getDate() + weekOffset * 7);
+    return base;
+  }, [selectedDate, weekOffset]);
   const weekDays = useMemo(() => [...Array(7)].map((_, i) => addDays(startDate, i)), [startDate]);
+  const weekLabel = useMemo(() => {
+    const start = weekDays[0];
+    const end = weekDays[6];
+    if (start.getMonth() === end.getMonth()) {
+      return `${format(start, 'MMM d')} – ${format(end, 'd, yyyy')}`;
+    }
+    return `${format(start, 'MMM d')} – ${format(end, 'MMM d, yyyy')}`;
+  }, [weekDays]);
+
+  const goToToday = useCallback(() => {
+    setSelectedDate(new Date());
+    setWeekOffset(0);
+  }, []);
+
+  const goNextWeek = useCallback(() => {
+    setWeekOffset(o => o + 1);
+  }, []);
+
+  const goPrevWeek = useCallback(() => {
+    setWeekOffset(o => o - 1);
+  }, []);
 
   const selectedDayEntries = useMemo(() => {
     return entries
@@ -139,6 +165,28 @@ export function CalendarPage({ userId }: { userId: string }) {
 
         {/* Weekly Header */}
         <div className="border-b border-[#2A2545] bg-[rgba(21,18,42,0.5)] px-1.5 py-2 md:p-4">
+            <div className="flex items-center justify-between mb-3 max-w-3xl mx-auto">
+              <button
+                onClick={goPrevWeek}
+                className="p-1.5 md:p-2 rounded-lg hover:bg-[rgba(139,92,246,0.1)] text-[#8E89B3] hover:text-[#A78BFA] transition-all"
+                aria-label="Previous week"
+              >
+                <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
+              </button>
+              <button
+                onClick={goToToday}
+                className="text-[11px] md:text-xs font-semibold uppercase tracking-wider text-[#A78BFA] hover:text-white transition-colors px-2"
+              >
+                {weekLabel}
+              </button>
+              <button
+                onClick={goNextWeek}
+                className="p-1.5 md:p-2 rounded-lg hover:bg-[rgba(139,92,246,0.1)] text-[#8E89B3] hover:text-[#A78BFA] transition-all"
+                aria-label="Next week"
+              >
+                <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />
+              </button>
+            </div>
             <div className="flex justify-between items-center max-w-3xl mx-auto">
                 {weekDays.map(day => {
                     const isSelected = isSameDay(day, selectedDate);

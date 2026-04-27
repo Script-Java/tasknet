@@ -147,18 +147,16 @@ export function TasksPage({ userId }: { userId: string }) {
         </button>
       </div>
 
-      <div className="max-w-2xl">
+      <div>
         <NaturalInput userId={userId} onSaved={loadData} />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 md:gap-8">
-        {/* Left Column - Form */}
-        <div>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-8">
+        <div className="order-2 xl:order-1">
           <TaskForm userId={userId} onSaved={loadData} />
         </div>
 
-        {/* Right Column - Lists */}
-        <div className="space-y-6 md:space-y-8">
+        <div className="order-1 xl:order-2 space-y-4 md:space-y-8">
           {/* Active Tasks */}
           <div className="galaxy-card p-4 md:p-6">
             <h3 className="text-lg md:text-xl font-bold mb-4 flex items-center justify-between text-[#EEEEF8]">

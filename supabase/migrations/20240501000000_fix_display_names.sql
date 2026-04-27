@@ -94,17 +94,18 @@ AS $$
 BEGIN
     RETURN QUERY
     SELECT
-        ROW_NUMBER() OVER (ORDER BY u.xp DESC) AS rank,
+        ROW_NUMBER() OVER (ORDER BY us.xp DESC) AS rank,
         u.id AS user_id,
         u.username,
         au.email::text,
-        floor(sqrt(u.xp / 10.0))::BIGINT AS level,
-        u.xp
-    FROM users u
-    INNER JOIN group_members gm ON gm.user_id = u.id
-    LEFT JOIN auth.users au ON au.id = u.id
+        floor(sqrt(us.xp / 10.0))::BIGINT AS level,
+        us.xp
+    FROM user_stats us
+    INNER JOIN users u ON u.id = us.id
+    INNER JOIN group_members gm ON gm.user_id = us.id
+    LEFT JOIN auth.users au ON au.id = us.id
     WHERE gm.group_id = p_group_id
-    ORDER BY u.xp DESC;
+    ORDER BY us.xp DESC;
 END;
 $$;
 

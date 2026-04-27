@@ -95,7 +95,10 @@ export const social = {
 
     const userIds = members.map(m => m.user_id);
 
-    const profilesRes = await supabase.from('users').select('id, username, avatar_url, xp').in('id', userIds);
+    const [profilesRes, statsRes] = await Promise.all([
+      supabase.from('users').select('id, username, avatar_url').in('id', userIds),
+      supabase.from('user_stats').select('id, xp').in('id', userIds),
+    ]);
     let emailsData: { user_id: string; email: string }[] = [];
     try {
       const { data } = await supabase.rpc('get_user_emails', { p_user_ids: userIds });
@@ -103,10 +106,16 @@ export const social = {
     } catch { /* emails optional */ }
 
     const profiles = profilesRes.data || [];
+    const stats = statsRes.data || [];
+
+    const statsMap = new Map<string, number>();
+    for (const s of stats) {
+      statsMap.set(s.id, s.xp);
+    }
 
     const profileMap = new Map<string, { username: string | null; avatar_url: string | null; xp: number }>();
     for (const p of profiles) {
-      profileMap.set(p.id, { username: p.username, avatar_url: p.avatar_url, xp: p.xp });
+      profileMap.set(p.id, { username: p.username, avatar_url: p.avatar_url, xp: statsMap.get(p.id) ?? 0 });
     }
 
     const emailMap = new Map<string, string>();

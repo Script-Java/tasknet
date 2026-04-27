@@ -82,13 +82,21 @@ export const gamification = {
   },
 
   async getAchievements(userId: string): Promise<Achievement[]> {
-    const { data, error } = await supabase
-      .from('achievements')
-      .select('*')
-      .eq('user_id', userId)
-      .order('unlocked_at', { ascending: false });
-    if (error) throw error;
-    return data as Achievement[];
+    const { data, error } = await supabase.rpc('get_user_achievements', { p_user_id: userId });
+    if (error) {
+      const { data: fallback } = await supabase
+        .from('achievements')
+        .select('*')
+        .eq('user_id', userId)
+        .order('unlocked_at', { ascending: false });
+      return (fallback as Achievement[]) || [];
+    }
+    return ((data || []) as { type: string; unlocked_at: string }[]).map(a => ({
+      id: '',
+      user_id: userId,
+      type: a.type,
+      unlocked_at: a.unlocked_at,
+    }));
   },
 
   async getHabitStreaks(userId: string): Promise<{ id: string; streak: number; last_completed_date: string | null }[]> {
