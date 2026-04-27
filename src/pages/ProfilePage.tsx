@@ -32,6 +32,11 @@ export function ProfilePage({ userId }: { userId: string }) {
   const [tab, setTab] = useState<Tab>('profile');
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Reset to profile tab when switching to a different user's profile
+  useEffect(() => {
+    setTab('profile');
+  }, [viewUserId]);
   const [editing, setEditing] = useState(false);
   const [editUsername, setEditUsername] = useState('');
   const [avatarUploading, setAvatarUploading] = useState(false);
