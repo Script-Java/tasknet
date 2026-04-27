@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { Group, GroupMember, GroupMemberWithProfile, LeaderboardEntry, UserProfile } from './types';
+import type { Group, GroupMember, GroupMemberWithProfile, LeaderboardEntry, UserProfile, GroupMemberTask, GroupMemberHabit, Task, Habit } from './types';
 
 export const social = {
   async createGroup(name: string): Promise<Group> {
@@ -201,5 +201,29 @@ export const social = {
 
     const { data } = supabase.storage.from('avatars').getPublicUrl(path);
     return data.publicUrl;
+  },
+
+  async getGroupMemberTasks(groupId: string): Promise<GroupMemberTask[]> {
+    const { data, error } = await supabase.rpc('get_group_member_tasks', { p_group_id: groupId });
+    if (error) throw error;
+    return (data || []) as GroupMemberTask[];
+  },
+
+  async getGroupMemberHabits(groupId: string): Promise<GroupMemberHabit[]> {
+    const { data, error } = await supabase.rpc('get_group_member_habits', { p_group_id: groupId });
+    if (error) throw error;
+    return (data || []) as GroupMemberHabit[];
+  },
+
+  async getUserProfileTasks(userId: string): Promise<Task[]> {
+    const { data, error } = await supabase.rpc('get_user_profile_tasks', { p_user_id: userId });
+    if (error) throw error;
+    return (data || []) as Task[];
+  },
+
+  async getUserProfileHabits(userId: string): Promise<Habit[]> {
+    const { data, error } = await supabase.rpc('get_user_profile_habits', { p_user_id: userId });
+    if (error) throw error;
+    return (data || []) as Habit[];
   },
 };

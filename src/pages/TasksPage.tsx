@@ -8,7 +8,7 @@ import { dispatchGamificationUpdate } from '../lib/gamificationEvents';
 import { buildBadgeContext, evaluateBadges, unlockBadges, saveBadgeProgress } from '../lib/badgeEvaluator';
 import { useBadgeContext } from '../contexts/BadgeContext';
 import type { Task } from '../lib/types';
-import { Trash2, RefreshCw, Star, AlertTriangle } from 'lucide-react';
+import { Trash2, RefreshCw, Star, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -17,6 +17,7 @@ export function TasksPage({ userId }: { userId: string }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Task | null>(null);
+  const [taskActionTarget, setTaskActionTarget] = useState<Task | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -171,7 +172,7 @@ export function TasksPage({ userId }: { userId: string }) {
               {activeTasks.map(task => (
                 <div key={task.id} className={`group flex items-center justify-between p-3 md:p-4 bg-[rgba(13,11,30,0.4)] rounded-2xl border transition-colors ${task.overdue ? 'border-[rgba(239,83,80,0.3)]' : 'border-[#2A2545] hover:border-[rgba(139,92,246,0.3)]'}`}>
                   <div className="flex items-center space-x-3 md:space-x-4 overflow-hidden min-w-0">
-                    <button onClick={() => toggleTaskCompletion(task)} className="galaxy-check flex-shrink-0">
+                    <button onClick={() => setTaskActionTarget(task)} className="galaxy-check flex-shrink-0" aria-label="Task actions">
                     </button>
                     <div className="min-w-0">
                       <p className="font-medium text-[#EEEEF8] truncate">{task.title}</p>
@@ -311,6 +312,85 @@ export function TasksPage({ userId }: { userId: string }) {
                   }}
                 >
                   {isDeleting ? 'Deleting...' : 'Delete & Revoke XP'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Task Action Modal */}
+      <AnimatePresence>
+        {taskActionTarget && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: 'rgba(6, 4, 15, 0.75)', backdropFilter: 'blur(8px)' }}
+            onClick={() => setTaskActionTarget(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.88, y: 24, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.88, y: 24, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-sm rounded-3xl border p-6 text-center overflow-hidden"
+              style={{
+                background: 'linear-gradient(160deg, #1C1836 0%, #0F0D22 100%)',
+                borderColor: 'rgba(139, 92, 246, 0.3)',
+                boxShadow: '0 0 40px rgba(139, 92, 246, 0.1), 0 20px 40px rgba(0,0,0,0.5)',
+              }}
+            >
+              <div
+                className="absolute top-0 left-0 right-0 h-1"
+                style={{ background: 'linear-gradient(90deg, transparent, #8B5CF6, #A78BFA, transparent)' }}
+              />
+
+              <h3 className="text-lg font-black tracking-tight text-[#EEEEF8] mb-1">
+                {taskActionTarget.title}
+              </h3>
+              <p className="text-[#8E89B3] text-sm mb-6">
+                {taskActionTarget.duration}m &bull; {taskActionTarget.priority} priority
+                {taskActionTarget.deadline && <> &bull; Due {new Date(taskActionTarget.deadline).toLocaleDateString()}</>}
+              </p>
+
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => {
+                    const t = taskActionTarget;
+                    setTaskActionTarget(null);
+                    toggleTaskCompletion(t);
+                  }}
+                  className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl font-semibold text-sm text-white transition-all"
+                  style={{
+                    background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
+                    boxShadow: '0 4px 20px rgba(139, 92, 246, 0.3)',
+                  }}
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  Complete Task
+                </button>
+
+                <button
+                  onClick={() => {
+                    const t = taskActionTarget;
+                    setTaskActionTarget(null);
+                    handleDeleteTask(t);
+                  }}
+                  className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl font-semibold text-sm text-[#EF5350] border border-[rgba(239,69,80,0.3)] hover:bg-[rgba(239,69,80,0.08)] transition-all"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Task
+                </button>
+
+                <button
+                  onClick={() => setTaskActionTarget(null)}
+                  className="w-full py-2.5 px-4 rounded-xl text-sm font-medium text-[#5C5780] hover:text-[#8E89B3] transition-colors"
+                >
+                  Cancel
                 </button>
               </div>
             </motion.div>

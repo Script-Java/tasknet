@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { social } from '../lib/social';
 import { supabase } from '../lib/supabase';
-import type { Group, GroupMemberWithProfile, LeaderboardEntry } from '../lib/types';
-import { Users, Plus, LogOut, Trash2, Copy, Trophy, ArrowLeft, ChevronRight, Crown, Mail, User } from 'lucide-react';
+import type { Group, GroupMemberWithProfile, LeaderboardEntry, GroupMemberTask, GroupMemberHabit } from '../lib/types';
+import { Users, Plus, LogOut, Trash2, Copy, Trophy, ArrowLeft, ChevronRight, Crown, Mail, User, CheckCircle, Repeat, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -232,8 +232,10 @@ function GroupDetail({
   const [group, setGroup] = useState<Group | null>(null);
   const [members, setMembers] = useState<GroupMemberWithProfile[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [memberTasks, setMemberTasks] = useState<GroupMemberTask[]>([]);
+  const [memberHabits, setMemberHabits] = useState<GroupMemberHabit[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'leaderboard' | 'members'>('leaderboard');
+  const [activeTab, setActiveTab] = useState<'leaderboard' | 'members' | 'tasks'>('leaderboard');
   const navigate = useNavigate();
 
   const loadData = useCallback(async () => {
@@ -248,6 +250,13 @@ function GroupDetail({
       ]);
       setMembers(memberData);
       setLeaderboard(lbData);
+
+      const [tasks, habits] = await Promise.all([
+        social.getGroupMemberTasks(groupId).catch(() => []),
+        social.getGroupMemberHabits(groupId).catch(() => []),
+      ]);
+      setMemberTasks(tasks);
+      setMemberHabits(habits);
     } catch {
       // Group not found or feature unavailable
     } finally {
@@ -347,6 +356,17 @@ function GroupDetail({
         >
           <Users className="w-4 h-4" />
           <span>Members</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('tasks')}
+          className={`flex-1 flex items-center justify-center space-x-1.5 py-2.5 px-3 rounded-xl text-sm font-semibold transition-all ${
+            activeTab === 'tasks'
+              ? 'bg-[rgba(139,92,246,0.2)] text-[#A78BFA] border border-[rgba(139,92,246,0.3)]'
+              : 'text-[#5C5780] hover:text-[#8E89B3]'
+          }`}
+        >
+          <Eye className="w-4 h-4" />
+          <span>Tasks</span>
         </button>
       </div>
 
@@ -454,6 +474,62 @@ function GroupDetail({
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {activeTab === 'tasks' && (
+        <div className="space-y-4">
+          <div className="galaxy-card p-4 md:p-6 rounded-3xl">
+            <h3 className="text-lg md:text-xl font-bold mb-4 flex items-center space-x-2 text-[#EEEEF8]">
+              <CheckCircle className="w-5 h-5 text-[#64B5F6]" />
+              <span>Group Tasks</span>
+            </h3>
+            {memberTasks.length === 0 ? (
+              <p className="text-[#8E89B3] text-center py-8">No tasks yet.</p>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
+                {memberTasks.map((t) => (
+                  <div key={t.task_id} className="flex items-center justify-between p-3 bg-[rgba(13,11,30,0.4)] rounded-xl border border-[#2A2545]">
+                    <div className="flex items-center space-x-3 min-w-0 flex-1">
+                      <div className={`w-5 h-5 rounded-lg flex items-center justify-center flex-shrink-0 border ${t.completed ? 'bg-[#8B5CF6] border-[#A78BFA]' : 'border-[#2A2545]'}`}>
+                        {t.completed && <CheckCircle className="w-3.5 h-3.5 text-white" />}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className={`text-sm font-medium truncate ${t.completed ? 'text-[#5C5780] line-through' : 'text-[#EEEEF8]'}`}>{t.title}</p>
+                        <p className="text-xs text-[#5C5780] mt-0.5">{t.username || 'Anonymous'} &bull; {t.duration}m &bull; <span className="capitalize">{t.priority}</span></p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="galaxy-card p-4 md:p-6 rounded-3xl">
+            <h3 className="text-lg md:text-xl font-bold mb-4 flex items-center space-x-2 text-[#EEEEF8]">
+              <Repeat className="w-5 h-5 text-[#A78BFA]" />
+              <span>Group Habits</span>
+            </h3>
+            {memberHabits.length === 0 ? (
+              <p className="text-[#8E89B3] text-center py-8">No habits yet.</p>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
+                {memberHabits.map((h) => (
+                  <div key={h.habit_id} className="flex items-center justify-between p-3 bg-[rgba(13,11,30,0.4)] rounded-xl border border-[#2A2545]">
+                    <div className="flex items-center space-x-3 min-w-0 flex-1">
+                      <div className="w-5 h-5 rounded-lg bg-[rgba(139,92,246,0.15)] border border-[#8B5CF6]/30 flex items-center justify-center flex-shrink-0">
+                        <Repeat className="w-3 h-3 text-[#A78BFA]" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-[#EEEEF8] truncate">{h.title}</p>
+                        <p className="text-xs text-[#5C5780] mt-0.5">{h.username || 'Anonymous'} &bull; {h.frequency} &bull; {h.duration}m{h.streak > 0 ? ` &bull; ${h.streak} day streak` : ''}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

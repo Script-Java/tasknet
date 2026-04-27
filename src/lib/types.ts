@@ -150,3 +150,25 @@ export interface UserProfile {
     last_completed_date: string;
   }>;
 }
+
+export interface GroupMemberTask {
+  user_id: string;
+  username: string | null;
+  task_id: string;
+  title: string;
+  completed: boolean;
+  priority: string;
+  deadline: string | null;
+  duration: number;
+}
+
+export interface GroupMemberHabit {
+  user_id: string;
+  username: string | null;
+  habit_id: string;
+  title: string;
+  frequency: string;
+  duration: number;
+  streak: number;
+  last_completed_date: string | null;
+}

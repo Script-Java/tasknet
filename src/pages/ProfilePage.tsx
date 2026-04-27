@@ -5,13 +5,13 @@ import { gamification } from '../lib/gamification';
 import { BadgeGallery } from '../components/BadgeGallery';
 import { GroupsPage } from './GroupsPage';
 import { BADGES } from '../lib/badges';
-import type { UserProfile, UserStats, Achievement } from '../lib/types';
-import { User, Award, CheckCircle, Zap, Edit3, Save, X, Camera, Clock, Settings as SettingsIcon, Trophy, TrendingUp, Users } from 'lucide-react';
+import type { UserProfile, UserStats, Achievement, Task, Habit } from '../lib/types';
+import { User, Award, CheckCircle, Zap, Edit3, Save, X, Camera, Clock, Settings as SettingsIcon, Trophy, TrendingUp, Users, ListTodo } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { onGamificationUpdate } from '../lib/gamificationEvents';
 
-type Tab = 'profile' | 'preferences' | 'achievements' | 'groups';
+type Tab = 'profile' | 'todo' | 'achievements' | 'preferences' | 'groups';
 
 const EMPTY_PROFILE: UserProfile = {
   id: '',
@@ -42,6 +42,8 @@ export function ProfilePage({ userId }: { userId: string }) {
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [profileTasks, setProfileTasks] = useState<Task[]>([]);
+  const [profileHabits, setProfileHabits] = useState<Habit[]>([]);
   const [workStart, setWorkStart] = useState(() => localStorage.getItem('fides_work_start') || '09:00');
   const [workEnd, setWorkEnd] = useState(() => localStorage.getItem('fides_work_end') || '17:00');
 
@@ -110,17 +112,33 @@ export function ProfilePage({ userId }: { userId: string }) {
     }
   }, [viewUserId, isOwnProfile]);
 
+  const loadTodo = useCallback(async () => {
+    try {
+      const [tasks, habits] = await Promise.all([
+        social.getUserProfileTasks(viewUserId),
+        social.getUserProfileHabits(viewUserId),
+      ]);
+      setProfileTasks(tasks);
+      setProfileHabits(habits);
+    } catch {
+      setProfileTasks([]);
+      setProfileHabits([]);
+    }
+  }, [viewUserId]);
+
   useEffect(() => {
     ensureAndLoadProfile();
     loadStats();
     loadOthersAchievements();
+    loadTodo();
     const cleanup = onGamificationUpdate(() => {
       ensureAndLoadProfile();
       loadStats();
       loadOthersAchievements();
+      loadTodo();
     });
     return () => cleanup();
-  }, [ensureAndLoadProfile, loadStats, loadOthersAchievements]);
+  }, [ensureAndLoadProfile, loadStats, loadOthersAchievements, loadTodo]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -216,6 +234,7 @@ export function ProfilePage({ userId }: { userId: string }) {
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode; ownerOnly?: boolean }[] = [
     { id: 'profile', label: 'Profile', icon: <User className="w-4 h-4" /> },
+    { id: 'todo', label: 'Todo', icon: <ListTodo className="w-4 h-4" /> },
     { id: 'achievements', label: 'Achievements', icon: <Trophy className="w-4 h-4" /> },
     { id: 'preferences', label: 'Settings', icon: <SettingsIcon className="w-4 h-4" />, ownerOnly: true },
     { id: 'groups', label: 'Groups', icon: <Users className="w-4 h-4" />, ownerOnly: true },
@@ -401,7 +420,63 @@ export function ProfilePage({ userId }: { userId: string }) {
         </div>
       )}
 
-      {/* Preferences Tab */}
+      {/* Todo Tab */}
+      {tab === 'todo' && (
+        <div className="space-y-6">
+          <div className="galaxy-card p-4 md:p-6 rounded-3xl">
+            <h3 className="text-lg md:text-xl font-bold mb-4 flex items-center space-x-2 text-[#EEEEF8]">
+              <CheckCircle className="w-5 h-5 text-[#64B5F6]" />
+              <span>Incomplete Tasks</span>
+              {profileTasks.length > 0 && <span className="text-xs font-medium text-[#5C5780] bg-[rgba(92,87,128,0.15)] px-2 py-0.5 rounded-full">{profileTasks.length}</span>}
+            </h3>
+            {profileTasks.length === 0 ? (
+              <p className="text-[#8E89B3] text-center py-6 text-sm">No pending tasks.</p>
+            ) : (
+              <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-1">
+                {profileTasks.map((t) => (
+                  <div key={t.id} className="flex items-center justify-between p-3 bg-[rgba(13,11,30,0.4)] rounded-xl border border-[#2A2545]">
+                    <div className="flex items-center space-x-3 min-w-0 flex-1">
+                      <div className="w-5 h-5 rounded-lg border-2 border-[#2A2545] flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-[#EEEEF8] truncate">{t.title}</p>
+                        <p className="text-xs text-[#5C5780] mt-0.5">{t.duration}m &bull; <span className="capitalize">{t.priority}</span>{t.deadline && <> &bull; Due {new Date(t.deadline).toLocaleDateString()}</>}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="galaxy-card p-4 md:p-6 rounded-3xl">
+            <h3 className="text-lg md:text-xl font-bold mb-4 flex items-center space-x-2 text-[#EEEEF8]">
+              <ListTodo className="w-5 h-5 text-[#A78BFA]" />
+              <span>Active Habits</span>
+              {profileHabits.length > 0 && <span className="text-xs font-medium text-[#5C5780] bg-[rgba(92,87,128,0.15)] px-2 py-0.5 rounded-full">{profileHabits.length}</span>}
+            </h3>
+            {profileHabits.length === 0 ? (
+              <p className="text-[#8E89B3] text-center py-6 text-sm">No active habits.</p>
+            ) : (
+              <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-1">
+                {profileHabits.map((h) => (
+                  <div key={h.id} className="flex items-center justify-between p-3 bg-[rgba(13,11,30,0.4)] rounded-xl border border-[#2A2545]">
+                    <div className="flex items-center space-x-3 min-w-0 flex-1">
+                      <div className="w-5 h-5 rounded-lg bg-[rgba(139,92,246,0.15)] border border-[#8B5CF6]/30 flex items-center justify-center flex-shrink-0">
+                        <ListTodo className="w-3 h-3 text-[#A78BFA]" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-[#EEEEF8] truncate">{h.title}</p>
+                        <p className="text-xs text-[#5C5780] mt-0.5">{h.frequency} &bull; {h.duration}m{h.streak > 0 ? <> &bull; {h.streak} day streak</> : ''}{h.last_completed_date ? <> &bull; Last: {new Date(h.last_completed_date).toLocaleDateString()}</> : ''}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {tab === 'preferences' && isOwnProfile && (
         <div className="galaxy-card p-5 md:p-8 space-y-6">
           <div>
