@@ -71,7 +71,6 @@ export function scheduleTasksAndHabits(
         let slot = new Date(day);
         slot.setHours(workStartHour, 0, 0, 0);
 
-        // Find non-overlapping slot (simplistic)
         let conflict = true;
         let attempts = 0;
         while (conflict && attempts < 500) {
@@ -79,11 +78,11 @@ export function scheduleTasksAndHabits(
             const slotMs = slot.getTime();
             const slotEndMs = slotEnd.getTime();
 
-            conflict = parsedEntries.some(e => {
-                return (slotMs < e.end && slotEndMs > e.start);
-            });
-            if (conflict) {
-                slot = addMinutes(slot, 30);
+            const overlappingEntry = parsedEntries.find(e => slotMs < e.end && slotEndMs > e.start);
+            if (overlappingEntry) {
+                slot = new Date(overlappingEntry.end);
+            } else {
+                conflict = false;
             }
             attempts++;
         }
@@ -117,12 +116,11 @@ export function scheduleTasksAndHabits(
         const currentSlotMs = currentSlot.getTime();
         const slotEndMs = slotEnd.getTime();
 
-        conflict = parsedEntries.some(e => {
-            return (currentSlotMs < e.end && slotEndMs > e.start);
-        });
-
-        if (conflict) {
-            currentSlot = addMinutes(currentSlot, 30); // Try 30 mins later
+        const overlappingEntry = parsedEntries.find(e => currentSlotMs < e.end && slotEndMs > e.start);
+        if (overlappingEntry) {
+            currentSlot = new Date(overlappingEntry.end);
+        } else {
+            conflict = false;
         }
         attempts++;
     }
